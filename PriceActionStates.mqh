@@ -21,6 +21,16 @@ enum PeakState {
    LOWER_LOW_PEAK = 4
 };
 
+struct PrevPeaks 
+{
+   int peakTime1;
+   double peakClose1; //last
+   PeakState peakState1;
+   int peakTime2;
+   double peakClose2; // before last
+   PeakState peakState2;
+};
+
 struct PaResults
 {
    int errorCode; // 0 - no error, other values indicate errors
@@ -28,25 +38,24 @@ struct PaResults
    PeakState prevBarPeakState;
 };
 
-struct PrevPeaks 
+//--- internal state variables
+struct PriceActionState
 {
-   int peakInd1;
-   double peakClose1; //last
+   TrendState trendState;
+   datetime peakTime1;
+   double  peakClose1; //last
    PeakState peakState1;
-   int peakInd2;
-   double peakClose2; // before last
+   datetime peakTime2;
+   double  peakClose2; // before last
    PeakState peakState2;
 };
+static PriceActionState priceActionState;
 
 //+------------------------------------------------------------------+
-//| Setup                                               
+//| Setup parameters
 //+------------------------------------------------------------------+
 input double TrendMargin = 0; // points
 input bool verbose = true;
-
-//--- internal state variables
-TrendState TrendBuffer[];
-PeakState PeakBuffer[];
 
 int PaInit()
 {
@@ -61,12 +70,15 @@ int PaInit()
    //CleanPeakLines();
    //CleanPeakLabels();
 
-   ArrayResize(TrendBuffer, Bars);
-   ArraySetAsSeries(TrendBuffer, true);
-   ArrayResize(PeakBuffer, Bars);
-   ArraySetAsSeries(PeakBuffer, true);
+   priceActionState.trendState = NO_TREND;
+   priceActionState.peakTime1 = Time[Bars-1];
+   priceActionState.peakClose1 = -1; //last
+   priceActionState.peakState1 = NO_PEAK;
+   priceActionState.peakTime2 = Time[Bars-1];
+   priceActionState.peakClose2 = -1; // before last
+   priceActionState.peakState2 = NO_PEAK;
 
-   for(int i=Bars-2; i>=0; i--)
+   for(int i=Bars-2; i>=1; i--)
    {
       //if (i < Bars - 1) // Only process if there's a next bar
       results = ProcessBar(i);
@@ -90,21 +102,11 @@ PaResults PaProcessBars()
    //CleanPeakLines();
    //CleanPeakLabels();
 
-   static datetime lastTime = 0;
-   if (lastTime == Time[0]) 
-   {
-      //if(verbose) Print("ProcessBar: Skipping bar i=", 0, " because it's the same as last processed bar");
-      results.errorCode = 1; // Skip if same time as last processed
-      return results; // Skip if same time as last processed
+   static datetime lastBarTime = 0;
+   if(Time[0] != lastBarTime) {
+      lastBarTime = Time[0];
+      results = ProcessBar(1); // process the just-completed bar
    }
-   lastTime = Time[0];
-
-   ArrayResize(TrendBuffer, Bars);
-   ArraySetAsSeries(TrendBuffer, true);
-   ArrayResize(PeakBuffer, Bars);
-   ArraySetAsSeries(PeakBuffer, true);
-
-   results = ProcessBar(1);
 
    return results;
 }
@@ -119,30 +121,46 @@ PaResults ProcessBar(int i)
    results.trendState = NO_TREND;
    results.prevBarPeakState = NO_PEAK;
 
-   if(verbose) Print("ProcessBar i=", i, ", Time=", TimeToString(Time[i], TIME_DATE | TIME_MINUTES));
+   if(verbose) Print("ProcessBar start i=", i, ", Time=", TimeToString(Time[i], TIME_DATE | TIME_MINUTES), "--------------------");
+   printf("ProcessBar 1, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
 
    PeakState peak_state = NO_PEAK;
 
    TrendState lastBarDirection = DetectBarDirection(Close[i+1], Close[i]);
 
-   TrendBuffer[i] = DetectTrendState(i, TrendBuffer[i+1], lastBarDirection);
+   TrendState newTrend = DetectTrendState(i, priceActionState.trendState, lastBarDirection);
 
-   // Peak detection logic
-   peak_state = DetectPeakState(i, TrendBuffer[i+1], TrendBuffer[i]);
-   if(peak_state != NO_PEAK)
+   PeakState peakState = DetectPeakState(i, priceActionState.trendState, newTrend);
+
+   if(peakState != NO_PEAK)
    {
-      VisualizePeakOverlay(i+1, peak_state);
-      // DrawPeakLines(i);
+      printf("ProcessBar 2, peakTime1=%d, peakTime2=%d", priceActionState.peakTime1, priceActionState.peakTime2);
+      // update internal peaks state
+      priceActionState.peakTime2 = priceActionState.peakTime1;
+      priceActionState.peakClose2 = priceActionState.peakClose1;
+      priceActionState.peakState2 = priceActionState.peakState1;
+
+      priceActionState.peakTime1 = Time[i+1];
+      priceActionState.peakClose1 = Close[i+1]; //last
+      priceActionState.peakState1 = peakState;
+
+      printf("ProcessBar 3, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
+
+      VisualizePeakOverlay(i+1, peakState);
+      DrawPeakLines();
    }
 
-   // Buffers
-   PeakBuffer[i+1] = peak_state;
+   // update internal state
+   priceActionState.trendState = newTrend;
 
-   results.trendState = TrendBuffer[i];
-   results.prevBarPeakState = peak_state;
+   // results
+   results.trendState = newTrend;
+   results.prevBarPeakState = peakState;
    
-   if(verbose) Print("ProcessBar i=", i, ", TrendBuffer[", i, "]=", GetTrendDescription((TrendState)TrendBuffer[i]), 
-                     ", PeakBuffer[", i+1, "]=", GetPeakDescription((PeakState)PeakBuffer[i+1]));
+   if(verbose) Print("ProcessBar end i=", i, ", newTrend=", GetTrendDescription((TrendState)newTrend), 
+                     ", peakState=", GetPeakDescription((PeakState)peakState), "--------------------");
+   // if(verbose) Print("ProcessBar end i=", i, ", peakState1=", GetPeakDescription(priceActionState.peakState1), 
+   //                   ", peakState2=", GetPeakDescription((priceActionState.peakState2)), "--------------------");
 
    return results;
 }
@@ -169,59 +187,6 @@ TrendState DetectBarDirection(double prevClose, double currClose)
    }
 }
 
-//+------------------------------------------------------------------+
-//| Detect the basic trend between two closes                        |
-//+------------------------------------------------------------------+
-PrevPeaks GetPrevLowHighPeaks(int i, int limit)
-{   
-   PrevPeaks peaks;
-   peaks.peakClose1 = -1;
-   peaks.peakClose2 = -1;
-   peaks.peakState1 = NO_PEAK;
-   peaks.peakState2 = NO_PEAK;
-   peaks.peakInd1 = -1;
-   peaks.peakInd2 = -1;
-
-   int peakCount = 0;
-
-   for(int p=i+1; p<=limit; p++)
-   {
-      if (p < Bars - 1) // Only process if there's a next bar
-      {
-         if(PeakBuffer[p] == NO_PEAK)
-            continue; // Skip if no peak
-         
-         peakCount++;
-
-         if(peaks.peakState1 == NO_PEAK)
-         {
-            peaks.peakInd1 = p;
-            peaks.peakClose1 = Close[p];
-            peaks.peakState1 = (PeakState)PeakBuffer[p];
-            //if(verbose) Print("GetPrevLowHighPeaks found first peak at index ", p, ", state=", GetPeakDescription(peaks.peakState1), ", close=", peaks.peakClose1);
-         }
-         else if((peaks.peakState1 == LOCAL_LOW_PEAK || peaks.peakState1 == LOWER_LOW_PEAK) && (PeakBuffer[p] == LOCAL_HIGH_PEAK || PeakBuffer[p] == HIGHER_HIGH_PEAK))
-         {
-            peaks.peakInd2 = p;
-            peaks.peakClose2 = Close[p];
-            peaks.peakState2 = (PeakState)PeakBuffer[p];
-            //if(verbose) Print("GetPrevLowHighPeaks found second peak at index ", p, ", state=", GetPeakDescription(peaks.peakState2), ", close=", peaks.peakClose2);
-            break;
-         }
-         else if((peaks.peakState1 == LOCAL_HIGH_PEAK || peaks.peakState1 == HIGHER_HIGH_PEAK) && (PeakBuffer[p] == LOCAL_LOW_PEAK || PeakBuffer[p] == LOWER_LOW_PEAK))
-         {
-            peaks.peakInd2 = p;
-            peaks.peakClose2 = Close[p];
-            peaks.peakState2 = (PeakState)PeakBuffer[p];
-            //if(verbose) Print("GetPrevLowHighPeaks found second peak at index ", p, ", state=", GetPeakDescription(peaks.peakState2), ", close=", peaks.peakClose2);
-            break;
-         }
-         
-      }
-   }   
-
-   return peaks;
-}
 //+------------------------------------------------------------------+
 //| Get peak state description          |
 //+------------------------------------------------------------------+
@@ -271,23 +236,22 @@ TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDire
 {
    TrendState res = trendState;
 
-   printf("DetectTrendState, trendState=%s, lastBarDirection=%s", GetTrendDescription(trendState), GetTrendDescription(lastBarDirection));
-   
-   PrevPeaks peaks = GetPrevLowHighPeaks(i,Bars);
-   printf("DetectTrendState, peakState1=%s, peakState2=%s, peakClose1=%f, peakClose2=%f", GetPeakDescription(peaks.peakState1), GetPeakDescription(peaks.peakState2), peaks.peakClose1, peaks.peakClose2);
+   printf("DetectTrendState, trendState=%s, lastBarDirection=%s", GetTrendDescription(trendState), GetTrendDescription(lastBarDirection));  
+   printf("DetectTrendState, peakState1=%s, peakState2=%s", GetPeakDescription(priceActionState.peakState1), GetPeakDescription(priceActionState.peakState2));
+   printf("DetectTrendState, peakClose1=%f, peakClose2=%f", priceActionState.peakClose1, priceActionState.peakClose2);
 
    double prevLowClose = -1;
    double prevHighClose = -1;
 
-   if(peaks.peakState1 != LOCAL_HIGH_PEAK || peaks.peakState1 == HIGHER_HIGH_PEAK)
-      prevHighClose = peaks.peakClose1;
-   else if(peaks.peakState1 != LOCAL_LOW_PEAK || peaks.peakState1 == LOWER_LOW_PEAK)
-      prevLowClose = peaks.peakClose1;
+   if(priceActionState.peakState1 != LOCAL_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK)
+      prevHighClose = priceActionState.peakClose1;
+   else if(priceActionState.peakState1 != LOCAL_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK)
+      prevLowClose = priceActionState.peakClose1;
    
-   if(peaks.peakState2 != LOCAL_HIGH_PEAK || peaks.peakState2 == HIGHER_HIGH_PEAK)
-      prevHighClose = peaks.peakClose2;
-   else if(peaks.peakState2 != LOCAL_LOW_PEAK || peaks.peakState2 == LOWER_LOW_PEAK)
-      prevLowClose = peaks.peakClose2;
+   if(priceActionState.peakState2 != LOCAL_HIGH_PEAK || priceActionState.peakState2 == HIGHER_HIGH_PEAK)
+      prevHighClose = priceActionState.peakClose2;
+   else if(priceActionState.peakState2 != LOCAL_LOW_PEAK || priceActionState.peakState2 == LOWER_LOW_PEAK)
+      prevLowClose = priceActionState.peakClose2;
 
    //if(verbose) Print("DetectTrendState, close0=", close0, ", prevLowClose=", prevLowClose, ", prevHighClose=", prevHighClose);
       
@@ -354,25 +318,23 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
    if(trendState == newTrend)
        return NO_PEAK; // No change in trend, keep previous peak state
 
-   PrevPeaks peaks = GetPrevLowHighPeaks(i,Bars);
-
    PeakState peak_state = NO_PEAK;
 
    // Up-trend peak logic
    if((trendState == UP_TREND || trendState == DOWN_TREND_RETRACEMENT) && (newTrend == DOWN_TREND || newTrend == UP_TREND_RETRACEMENT))
    {
       //if prev peak is high
-      if(peaks.peakState2 == LOCAL_HIGH_PEAK && Close[i+1] > peaks.peakClose2)
+      if(priceActionState.peakState2 == LOCAL_HIGH_PEAK && Close[i+1] > priceActionState.peakClose2)
       {
          peak_state = HIGHER_HIGH_PEAK;
          if(verbose) Print("DetectPeakState HH");
       }
-      else if(peaks.peakState2 == HIGHER_HIGH_PEAK) 
+      else if(priceActionState.peakState2 == HIGHER_HIGH_PEAK) 
       {
-         if(Close[i+1] > peaks.peakClose2)
+         if(Close[i+1] > priceActionState.peakClose2)
          {
             peak_state = HIGHER_HIGH_PEAK;
-            //PeakBuffer[peaks.peakInd2] = LOCAL_HIGH_PEAK; // update last peak to local peak
+            //PeakBuffer[priceActionState.peakTime2] = LOCAL_HIGH_PEAK; // update last peak to local peak
             if(verbose) Print("DetectPeakState update HH");
          }
          else
@@ -390,17 +352,17 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
    else if((trendState == DOWN_TREND || trendState == UP_TREND_RETRACEMENT) && (newTrend == UP_TREND || newTrend == DOWN_TREND_RETRACEMENT))
    {
       //if prev peak is high
-      if(peaks.peakState2 == LOCAL_LOW_PEAK && Close[i+1] < peaks.peakClose2)
+      if(priceActionState.peakState2 == LOCAL_LOW_PEAK && Close[i+1] < priceActionState.peakClose2)
       {
          peak_state = LOWER_LOW_PEAK;
          if(verbose) Print("DetectPeakState LL");
       }
-      else if(peaks.peakState2 == LOWER_LOW_PEAK)
+      else if(priceActionState.peakState2 == LOWER_LOW_PEAK)
       {
-         if(Close[i+1] < peaks.peakClose2)
+         if(Close[i+1] < priceActionState.peakClose2)
          {
             peak_state = LOWER_LOW_PEAK;
-            //PeakBuffer[peaks.peakInd2] = LOCAL_LOW_PEAK;
+            //PeakBuffer[priceActionState.peakTime2] = LOCAL_LOW_PEAK;
             if(verbose) Print("DetectPeakState update LL");
          }
          else
@@ -437,7 +399,7 @@ void VisualizePeakOverlay(int i, int peak_state)
       case LOWER_LOW_PEAK:    txt = "LL";    col = clrRed;   y = Low[i] - y_offset; break;
       default:  return; //              ObjectDelete("peak_" + IntegerToString(i)); return;
    }
-   string name = "peak_" + IntegerToString(peaksCountr++) + "_time_" + TimeToString(Time[i], TIME_MINUTES);
+   string name = "peak_" + IntegerToString(peaksCountr++) + "_time_" + TimeToString(Time[i], TIME_MINUTES) + "_" + GetPeakDescription((PeakState)peak_state);
    Print("VisualizePeakOverlay: i=", i, " name=", name, ", y=", y);
 
    ObjectDelete(name);
@@ -448,23 +410,47 @@ void VisualizePeakOverlay(int i, int peak_state)
 //+------------------------------------------------------------------+
 //| Draw lines between consecutive confirmed peaks                   |
 //+------------------------------------------------------------------+
-void DrawPeakLines(int i)
+void DrawPeakLines()
 {
       static int LinesCount = 0;
-      PrevPeaks peaks = GetPrevLowHighPeaks(i,Bars);
-      if(peaks.peakInd1 == -1 || peaks.peakInd2 == -1)
+      
+      if(priceActionState.peakTime1 == -1 || priceActionState.peakTime2 == -1)
          return; // No peaks found
 
-      string objName = "peaksline_#" + IntegerToString(LinesCount++) + "_from_" + IntegerToString(peaks.peakInd2) + "_to" + IntegerToString(peaks.peakInd1);
+      printf("DrawPeakLines, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
+
+      string objName = "peaksline_#" + IntegerToString(LinesCount++) + "_from_" + IntegerToString(priceActionState.peakTime2) + "_to_" + IntegerToString(priceActionState.peakTime1);
       color lineColor = clrRed;
-      
+
+      int barIndex1 = iBarShift(NULL, 0, priceActionState.peakTime1);
+      int barIndex2 = iBarShift(NULL, 0, priceActionState.peakTime2);
+
+      double price1 = Close[barIndex1];
+      double price2 = Close[barIndex2];
+
+      if(priceActionState.peakState1 == LOCAL_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK) 
+      {
+         price1 = High[barIndex1];
+         price2 = Low[barIndex2];
+      }
+      else if(priceActionState.peakState1 == LOCAL_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK)
+      {
+         price1 = Low[barIndex1];
+         price2 = High[barIndex2];
+      }
+      else
+      {
+         Print("DrawPeakLines: Invalid peak state, cannot draw line");
+         return;
+      }
+
       ObjectDelete(objName);
-      ObjectCreate(objName, OBJ_TREND, 0, Time[peaks.peakInd1], Close[peaks.peakInd1], Time[peaks.peakInd2], Close[peaks.peakInd2]);
+      ObjectCreate(objName, OBJ_TREND, 0, priceActionState.peakTime1, price1, priceActionState.peakTime2, price2);
       ObjectSet(objName, OBJPROP_COLOR, lineColor);
       ObjectSet(objName, OBJPROP_WIDTH, 2);
       ObjectSet(objName, OBJPROP_RAY, false);
 
-      //Print("DrawPeakLines: i=", i, ", ObjName=", objName);
+      Print("DrawPeakLines: ObjName=", objName);
 }
 
 //+------------------------------------------------------------------+
