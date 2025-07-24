@@ -15,8 +15,8 @@ enum TrendState {
 
 enum PeakState {
    NO_PEAK = 0,
-   LOCAL_HIGH_PEAK = 1,
-   LOCAL_LOW_PEAK = 2,
+   LOWER_HIGH_PEAK = 1,
+   HIGHER_LOW_PEAK = 2,
    HIGHER_HIGH_PEAK = 3,
    LOWER_LOW_PEAK = 4
 };
@@ -34,7 +34,8 @@ struct PrevPeaks
 struct PaResults
 {
    int errorCode; // 0 - no error, other values indicate errors
-   int trendState;
+   TrendState prevTrendState;
+   TrendState trendState;
    PeakState prevBarPeakState;
 };
 
@@ -61,6 +62,7 @@ int PaInit()
 {
    PaResults results;
    results.errorCode = 0; // No error
+   results.prevTrendState = NO_TREND;
    results.trendState = NO_TREND;
    results.prevBarPeakState = NO_PEAK;
 
@@ -77,14 +79,16 @@ int PaInit()
    priceActionState.peakTime2 = Time[Bars-1];
    priceActionState.peakClose2 = -1; // before last
    priceActionState.peakState2 = NO_PEAK;
+   
+   int numBarsToProcess = MathMin(Bars - 2, 100); // Process last 100 bars or less if not enough data
 
-   for(int i=Bars-2; i>=1; i--)
+   for(int i=numBarsToProcess; i>=1; i--)
    {
       //if (i < Bars - 1) // Only process if there's a next bar
       results = ProcessBar(i);
       if (results.errorCode != 0) 
       {
-         return 0; // Return error code if any
+         return results.errorCode; // Return error code if any
       }
    }
 
@@ -94,9 +98,12 @@ int PaInit()
 //+------------------------------------------------------------------+
 //| Custom indicator iteration function                              |
 //+------------------------------------------------------------------+
-PaResults PaProcessBars()
+PaResults PaProcessBars(int i)
 {
    PaResults results;
+   results.errorCode = 0; // Error code 1 indicates processing error
+   results.trendState = NO_TREND;
+   results.prevBarPeakState = NO_PEAK;
   
    // Clean up all objects before redrawing
    //CleanPeakLines();
@@ -105,7 +112,7 @@ PaResults PaProcessBars()
    static datetime lastBarTime = 0;
    if(Time[0] != lastBarTime) {
       lastBarTime = Time[0];
-      results = ProcessBar(1); // process the just-completed bar
+      results = ProcessBar(i); // process the just-completed bar
    }
 
    return results;
@@ -118,6 +125,7 @@ PaResults ProcessBar(int i)
 {
    PaResults results;
    results.errorCode = 0; // Error code 1 indicates processing error
+   results.prevTrendState = NO_TREND;
    results.trendState = NO_TREND;
    results.prevBarPeakState = NO_PEAK;
 
@@ -150,12 +158,13 @@ PaResults ProcessBar(int i)
       DrawPeakLines();
    }
 
-   // update internal state
-   priceActionState.trendState = newTrend;
-
    // results
+   results.prevTrendState = priceActionState.trendState;
    results.trendState = newTrend;
    results.prevBarPeakState = peakState;
+   
+   // update internal state
+   priceActionState.trendState = newTrend;
    
    if(verbose) Print("ProcessBar end i=", i, ", newTrend=", GetTrendDescription((TrendState)newTrend), 
                      ", peakState=", GetPeakDescription((PeakState)peakState), "--------------------");
@@ -196,10 +205,10 @@ string GetPeakDescription(PeakState peakState)
    {
       case NO_PEAK:
          return "NO_PEAK";
-      case LOCAL_HIGH_PEAK:
-         return "LOCAL_HIGH_PEAK";     
-      case LOCAL_LOW_PEAK:
-         return "LOCAL_LOW_PEAK";
+      case LOWER_HIGH_PEAK:
+         return "LOWER_HIGH_PEAK";     
+      case HIGHER_LOW_PEAK:
+         return "HIGHER_LOW_PEAK";
       case HIGHER_HIGH_PEAK:
          return "HIGHER_HIGH_PEAK";
       case LOWER_LOW_PEAK:
@@ -243,14 +252,14 @@ TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDire
    double prevLowClose = -1;
    double prevHighClose = -1;
 
-   if(priceActionState.peakState1 != LOCAL_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK)
+   if(priceActionState.peakState1 != LOWER_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK)
       prevHighClose = priceActionState.peakClose1;
-   else if(priceActionState.peakState1 != LOCAL_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK)
+   else if(priceActionState.peakState1 != HIGHER_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK)
       prevLowClose = priceActionState.peakClose1;
    
-   if(priceActionState.peakState2 != LOCAL_HIGH_PEAK || priceActionState.peakState2 == HIGHER_HIGH_PEAK)
+   if(priceActionState.peakState2 != LOWER_HIGH_PEAK || priceActionState.peakState2 == HIGHER_HIGH_PEAK)
       prevHighClose = priceActionState.peakClose2;
-   else if(priceActionState.peakState2 != LOCAL_LOW_PEAK || priceActionState.peakState2 == LOWER_LOW_PEAK)
+   else if(priceActionState.peakState2 != HIGHER_LOW_PEAK || priceActionState.peakState2 == LOWER_LOW_PEAK)
       prevLowClose = priceActionState.peakClose2;
 
    //if(verbose) Print("DetectTrendState, close0=", close0, ", prevLowClose=", prevLowClose, ", prevHighClose=", prevHighClose);
@@ -324,7 +333,7 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
    if((trendState == UP_TREND || trendState == DOWN_TREND_RETRACEMENT) && (newTrend == DOWN_TREND || newTrend == UP_TREND_RETRACEMENT))
    {
       //if prev peak is high
-      if(priceActionState.peakState2 == LOCAL_HIGH_PEAK && Close[i+1] > priceActionState.peakClose2)
+      if(priceActionState.peakState2 == LOWER_HIGH_PEAK && Close[i+1] > priceActionState.peakClose2)
       {
          peak_state = HIGHER_HIGH_PEAK;
          if(verbose) Print("DetectPeakState HH");
@@ -334,25 +343,24 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
          if(Close[i+1] > priceActionState.peakClose2)
          {
             peak_state = HIGHER_HIGH_PEAK;
-            //PeakBuffer[priceActionState.peakTime2] = LOCAL_HIGH_PEAK; // update last peak to local peak
             if(verbose) Print("DetectPeakState update HH");
          }
          else
          {
-            peak_state = LOCAL_HIGH_PEAK; // update last peak to local peak
-            if(verbose) Print("DetectPeakState update H");
+            peak_state = LOWER_HIGH_PEAK; // update last peak to local peak
+            if(verbose) Print("DetectPeakState update LH");
          }
       }
       else
       {
-         peak_state = LOCAL_HIGH_PEAK;
-         if(verbose) Print("DetectPeakState H");
+         peak_state = LOWER_HIGH_PEAK;
+         if(verbose) Print("DetectPeakState LH");
       }  
    }
    else if((trendState == DOWN_TREND || trendState == UP_TREND_RETRACEMENT) && (newTrend == UP_TREND || newTrend == DOWN_TREND_RETRACEMENT))
    {
       //if prev peak is high
-      if(priceActionState.peakState2 == LOCAL_LOW_PEAK && Close[i+1] < priceActionState.peakClose2)
+      if(priceActionState.peakState2 == HIGHER_LOW_PEAK && Close[i+1] < priceActionState.peakClose2)
       {
          peak_state = LOWER_LOW_PEAK;
          if(verbose) Print("DetectPeakState LL");
@@ -362,19 +370,18 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
          if(Close[i+1] < priceActionState.peakClose2)
          {
             peak_state = LOWER_LOW_PEAK;
-            //PeakBuffer[priceActionState.peakTime2] = LOCAL_LOW_PEAK;
             if(verbose) Print("DetectPeakState update LL");
          }
          else
          {
-            peak_state = LOCAL_LOW_PEAK; // update last peak to local peak
-            if(verbose) Print("DetectPeakState update L");
+            peak_state = HIGHER_LOW_PEAK; // update last peak to local peak
+            if(verbose) Print("DetectPeakState update HL");
          }
       }
       else 
       {
-         peak_state = LOCAL_LOW_PEAK;
-         if(verbose) Print("DetectPeakState L");
+         peak_state = HIGHER_LOW_PEAK;
+         if(verbose) Print("DetectPeakState HL");
       }
    }
    
@@ -389,14 +396,16 @@ void VisualizePeakOverlay(int i, int peak_state)
    static int peaksCountr = 0;
    string txt = "";
    color col = clrBlack;
-   double y_offset = 10 * Point; // Small offset above/below close
+   int Pip;
+   if(Digits==5 || Digits==3) Pip=10;else Pip=1;
+   double y_offset = 0.1 * Pip * Point; // Small offset above/below close
    double y = 0;
 
    switch(peak_state) {
-      case LOCAL_HIGH_PEAK:   txt = "\x48";  col = clrBlue;  y = High[i] + 2*y_offset; break;   // "H"
-      case LOCAL_LOW_PEAK:    txt = "\x4C";  col = clrRed;   y = Low[i] - y_offset; break;  // "L"
-      case HIGHER_HIGH_PEAK:  txt = "HH";    col = clrBlue;  y = High[i] + 2*y_offset; break;
-      case LOWER_LOW_PEAK:    txt = "LL";    col = clrRed;   y = Low[i] - y_offset; break;
+      case LOWER_HIGH_PEAK:   txt = "LH";  col = clrBlue;  y = High[i] + 4*y_offset; break;   // "H"
+      case HIGHER_LOW_PEAK:    txt = "HL";  col = clrRed;   y = Low[i] - 2*y_offset; break;  // "L"
+      case HIGHER_HIGH_PEAK:  txt = "HH";    col = clrBlue;  y = High[i] + 4*y_offset; break;
+      case LOWER_LOW_PEAK:    txt = "LL";    col = clrRed;   y = Low[i] - 2*y_offset; break;
       default:  return; //              ObjectDelete("peak_" + IntegerToString(i)); return;
    }
    string name = "peak_" + IntegerToString(peaksCountr++) + "_time_" + TimeToString(Time[i], TIME_MINUTES) + "_" + GetPeakDescription((PeakState)peak_state);
@@ -413,14 +422,14 @@ void VisualizePeakOverlay(int i, int peak_state)
 void DrawPeakLines()
 {
       static int LinesCount = 0;
-      
-      if(priceActionState.peakTime1 == -1 || priceActionState.peakTime2 == -1)
+
+      if(priceActionState.peakState1 == NO_PEAK || priceActionState.peakState2 == NO_PEAK)
          return; // No peaks found
 
       printf("DrawPeakLines, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
 
       string objName = "peaksline_#" + IntegerToString(LinesCount++) + "_from_" + IntegerToString(priceActionState.peakTime2) + "_to_" + IntegerToString(priceActionState.peakTime1);
-      color lineColor = clrRed;
+      color lineColor = clrWhite;
 
       int barIndex1 = iBarShift(NULL, 0, priceActionState.peakTime1);
       int barIndex2 = iBarShift(NULL, 0, priceActionState.peakTime2);
@@ -428,21 +437,21 @@ void DrawPeakLines()
       double price1 = Close[barIndex1];
       double price2 = Close[barIndex2];
 
-      if(priceActionState.peakState1 == LOCAL_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK) 
-      {
-         price1 = High[barIndex1];
-         price2 = Low[barIndex2];
-      }
-      else if(priceActionState.peakState1 == LOCAL_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK)
-      {
-         price1 = Low[barIndex1];
-         price2 = High[barIndex2];
-      }
-      else
-      {
-         Print("DrawPeakLines: Invalid peak state, cannot draw line");
-         return;
-      }
+      // if(priceActionState.peakState1 == LOWER_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK) 
+      // {
+      //    price1 = High[barIndex1];
+      //    price2 = Low[barIndex2];
+      // }
+      // else if(priceActionState.peakState1 == HIGHER_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK)
+      // {
+      //    price1 = Low[barIndex1];
+      //    price2 = High[barIndex2];
+      // }
+      // else
+      // {
+      //    Print("DrawPeakLines: Invalid peak state, cannot draw line");
+      //    return;
+      // }
 
       ObjectDelete(objName);
       ObjectCreate(objName, OBJ_TREND, 0, priceActionState.peakTime1, price1, priceActionState.peakTime2, price2);
