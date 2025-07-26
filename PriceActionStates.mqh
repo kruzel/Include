@@ -56,7 +56,7 @@ static PriceActionState priceActionState;
 //| Setup parameters
 //+------------------------------------------------------------------+
 input double TrendMargin = 0; // points
-input bool verbose = true;
+input bool PAverbose = false;
 
 int PaInit()
 {
@@ -67,10 +67,6 @@ int PaInit()
    results.prevBarPeakState = NO_PEAK;
 
    if (Bars < 3) return (0);
-   
-   // Clean up all objects before redrawing
-   //CleanPeakLines();
-   //CleanPeakLabels();
 
    priceActionState.trendState = NO_TREND;
    priceActionState.peakTime1 = Time[Bars-1];
@@ -95,6 +91,15 @@ int PaInit()
    return(0);
 }
 
+int PaDeinit()
+{
+   // Clean up all objects before redrawing
+   // CleanPeakLines();
+   CleanPeakLabels();
+   
+   return 0;
+}
+
 //+------------------------------------------------------------------+
 //| Custom indicator iteration function                              |
 //+------------------------------------------------------------------+
@@ -104,10 +109,6 @@ PaResults PaProcessBars(int i)
    results.errorCode = 0; // Error code 1 indicates processing error
    results.trendState = NO_TREND;
    results.prevBarPeakState = NO_PEAK;
-  
-   // Clean up all objects before redrawing
-   //CleanPeakLines();
-   //CleanPeakLabels();
 
    static datetime lastBarTime = 0;
    if(Time[0] != lastBarTime) {
@@ -129,8 +130,8 @@ PaResults ProcessBar(int i)
    results.trendState = NO_TREND;
    results.prevBarPeakState = NO_PEAK;
 
-   if(verbose) Print("ProcessBar start i=", i, ", Time=", TimeToString(Time[i], TIME_DATE | TIME_MINUTES), "--------------------");
-   printf("ProcessBar 1, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
+   if(PAverbose) Print("ProcessBar start i=", i, ", Time=", TimeToString(Time[i], TIME_DATE | TIME_MINUTES), "--------------------");
+   if(PAverbose) printf("ProcessBar 1, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
 
    PeakState peak_state = NO_PEAK;
 
@@ -142,7 +143,7 @@ PaResults ProcessBar(int i)
 
    if(peakState != NO_PEAK)
    {
-      printf("ProcessBar 2, peakTime1=%d, peakTime2=%d", priceActionState.peakTime1, priceActionState.peakTime2);
+      if(PAverbose) printf("ProcessBar 2, peakTime1=%d, peakTime2=%d", priceActionState.peakTime1, priceActionState.peakTime2);
       // update internal peaks state
       priceActionState.peakTime2 = priceActionState.peakTime1;
       priceActionState.peakClose2 = priceActionState.peakClose1;
@@ -152,7 +153,7 @@ PaResults ProcessBar(int i)
       priceActionState.peakClose1 = Close[i+1]; //last
       priceActionState.peakState1 = peakState;
 
-      printf("ProcessBar 3, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
+      if(PAverbose) printf("ProcessBar 3, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
 
       VisualizePeakOverlay(i+1, peakState);
       DrawPeakLines();
@@ -166,9 +167,9 @@ PaResults ProcessBar(int i)
    // update internal state
    priceActionState.trendState = newTrend;
    
-   if(verbose) Print("ProcessBar end i=", i, ", newTrend=", GetTrendDescription((TrendState)newTrend), 
+   if(PAverbose) Print("ProcessBar end i=", i, ", newTrend=", GetTrendDescription((TrendState)newTrend), 
                      ", peakState=", GetPeakDescription((PeakState)peakState), "--------------------");
-   // if(verbose) Print("ProcessBar end i=", i, ", peakState1=", GetPeakDescription(priceActionState.peakState1), 
+   // if(PAverbose) Print("ProcessBar end i=", i, ", peakState1=", GetPeakDescription(priceActionState.peakState1), 
    //                   ", peakState2=", GetPeakDescription((priceActionState.peakState2)), "--------------------");
 
    return results;
@@ -181,17 +182,17 @@ TrendState DetectBarDirection(double prevClose, double currClose)
 {
    if(currClose > prevClose + Point*TrendMargin)
    {
-      if(verbose) Print("DetectBarDirection UP");
+      if(PAverbose) Print("DetectBarDirection UP");
       return UP_TREND;
    }
    else if(currClose < prevClose - Point*TrendMargin)
    {
-      if(verbose) Print("DetectBarDirection DOWN");
+      if(PAverbose) Print("DetectBarDirection DOWN");
       return DOWN_TREND;
    }
    else
    {
-      if(verbose) Print("DetectBarDirection NO Direction");
+      if(PAverbose) Print("DetectBarDirection NO Direction");
       return NO_TREND;
    }
 }
@@ -245,9 +246,9 @@ TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDire
 {
    TrendState res = trendState;
 
-   printf("DetectTrendState, trendState=%s, lastBarDirection=%s", GetTrendDescription(trendState), GetTrendDescription(lastBarDirection));  
-   printf("DetectTrendState, peakState1=%s, peakState2=%s", GetPeakDescription(priceActionState.peakState1), GetPeakDescription(priceActionState.peakState2));
-   printf("DetectTrendState, peakClose1=%f, peakClose2=%f", priceActionState.peakClose1, priceActionState.peakClose2);
+   if(PAverbose) printf("DetectTrendState, trendState=%s, lastBarDirection=%s", GetTrendDescription(trendState), GetTrendDescription(lastBarDirection));  
+   if(PAverbose) printf("DetectTrendState, peakState1=%s, peakState2=%s", GetPeakDescription(priceActionState.peakState1), GetPeakDescription(priceActionState.peakState2));
+   if(PAverbose) printf("DetectTrendState, peakClose1=%f, peakClose2=%f", priceActionState.peakClose1, priceActionState.peakClose2);
 
    double prevLowClose = -1;
    double prevHighClose = -1;
@@ -262,55 +263,55 @@ TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDire
    else if(priceActionState.peakState2 != HIGHER_LOW_PEAK || priceActionState.peakState2 == LOWER_LOW_PEAK)
       prevLowClose = priceActionState.peakClose2;
 
-   //if(verbose) Print("DetectTrendState, close0=", close0, ", prevLowClose=", prevLowClose, ", prevHighClose=", prevHighClose);
+   //if(PAverbose) Print("DetectTrendState, close0=", close0, ", prevLowClose=", prevLowClose, ", prevHighClose=", prevHighClose);
       
    if(trendState == NO_TREND)
    {
       if(lastBarDirection == UP_TREND)
       {
          res = UP_TREND;
-         if(verbose) Print("DetectTrendState NO_TREND -> UP_TREND");
+         if(PAverbose) Print("DetectTrendState NO_TREND -> UP_TREND");
       }
       else if(lastBarDirection == DOWN_TREND)
       {
          res = DOWN_TREND;
-         if(verbose) Print("DetectTrendState NO_TREND -> DOWN_TREND");
+         if(PAverbose) Print("DetectTrendState NO_TREND -> DOWN_TREND");
       }     
    }
    else if(trendState == UP_TREND && lastBarDirection == DOWN_TREND)
    {
       res = UP_TREND_RETRACEMENT;
-      if(verbose) Print("DetectTrendState UP_TREND -> UP_TREND_RETRACEMENT");
+      if(PAverbose) Print("DetectTrendState UP_TREND -> UP_TREND_RETRACEMENT");
    }
    else if(trendState == UP_TREND_RETRACEMENT)
    {
       if(lastBarDirection == UP_TREND)
       {
          res = UP_TREND;
-         if(verbose) Print("DetectTrendState UP_TREND_RETRACEMENT -> UP_TREND");
+         if(PAverbose) Print("DetectTrendState UP_TREND_RETRACEMENT -> UP_TREND");
       }
       else if(prevLowClose == -1 || Close[i+1]  < prevLowClose) 
       {
          res = DOWN_TREND;
-         if(verbose) Print("DetectTrendState UP_TREND_RETRACEMENT -> DOWN_TREND");
+         if(PAverbose) Print("DetectTrendState UP_TREND_RETRACEMENT -> DOWN_TREND");
       }
    }
    else if(trendState == DOWN_TREND && lastBarDirection == UP_TREND)
    {
       res = DOWN_TREND_RETRACEMENT;
-      if(verbose) Print("DetectTrendState DOWN_TREND -> DOWN_TREND_RETRACEMENT");
+      if(PAverbose) Print("DetectTrendState DOWN_TREND -> DOWN_TREND_RETRACEMENT");
    }
    else if(trendState == DOWN_TREND_RETRACEMENT)
    {
        if(lastBarDirection == DOWN_TREND)
        {
          res = DOWN_TREND;
-         if(verbose) Print("DetectTrendState DOWN_TREND_RETRACEMENT -> DOWN_TREND");
+         if(PAverbose) Print("DetectTrendState DOWN_TREND_RETRACEMENT -> DOWN_TREND");
        }
        else if (prevHighClose == -1 || Close[i+1] > prevHighClose) 
        {
          res = UP_TREND;
-         if(verbose) Print("DetectTrendState DOWN_TREND_RETRACEMENT -> UP_TREND");
+         if(PAverbose) Print("DetectTrendState DOWN_TREND_RETRACEMENT -> UP_TREND");
        }
    }
    
@@ -336,25 +337,25 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
       if(priceActionState.peakState2 == LOWER_HIGH_PEAK && Close[i+1] > priceActionState.peakClose2)
       {
          peak_state = HIGHER_HIGH_PEAK;
-         if(verbose) Print("DetectPeakState HH");
+         if(PAverbose) Print("DetectPeakState HH");
       }
       else if(priceActionState.peakState2 == HIGHER_HIGH_PEAK) 
       {
          if(Close[i+1] > priceActionState.peakClose2)
          {
             peak_state = HIGHER_HIGH_PEAK;
-            if(verbose) Print("DetectPeakState update HH");
+            if(PAverbose) Print("DetectPeakState update HH");
          }
          else
          {
             peak_state = LOWER_HIGH_PEAK; // update last peak to local peak
-            if(verbose) Print("DetectPeakState update LH");
+            if(PAverbose) Print("DetectPeakState update LH");
          }
       }
       else
       {
          peak_state = LOWER_HIGH_PEAK;
-         if(verbose) Print("DetectPeakState LH");
+         if(PAverbose) Print("DetectPeakState LH");
       }  
    }
    else if((trendState == DOWN_TREND || trendState == UP_TREND_RETRACEMENT) && (newTrend == UP_TREND || newTrend == DOWN_TREND_RETRACEMENT))
@@ -363,25 +364,25 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
       if(priceActionState.peakState2 == HIGHER_LOW_PEAK && Close[i+1] < priceActionState.peakClose2)
       {
          peak_state = LOWER_LOW_PEAK;
-         if(verbose) Print("DetectPeakState LL");
+         if(PAverbose) Print("DetectPeakState LL");
       }
       else if(priceActionState.peakState2 == LOWER_LOW_PEAK)
       {
          if(Close[i+1] < priceActionState.peakClose2)
          {
             peak_state = LOWER_LOW_PEAK;
-            if(verbose) Print("DetectPeakState update LL");
+            if(PAverbose) Print("DetectPeakState update LL");
          }
          else
          {
             peak_state = HIGHER_LOW_PEAK; // update last peak to local peak
-            if(verbose) Print("DetectPeakState update HL");
+            if(PAverbose) Print("DetectPeakState update HL");
          }
       }
       else 
       {
          peak_state = HIGHER_LOW_PEAK;
-         if(verbose) Print("DetectPeakState HL");
+         if(PAverbose) Print("DetectPeakState HL");
       }
    }
    
@@ -409,7 +410,7 @@ void VisualizePeakOverlay(int i, int peak_state)
       default:  return; //              ObjectDelete("peak_" + IntegerToString(i)); return;
    }
    string name = "peak_" + IntegerToString(peaksCountr++) + "_time_" + TimeToString(Time[i], TIME_MINUTES) + "_" + GetPeakDescription((PeakState)peak_state);
-   Print("VisualizePeakOverlay: i=", i, " name=", name, ", y=", y);
+   if(PAverbose) Print("VisualizePeakOverlay: i=", i, " name=", name, ", y=", y);
 
    ObjectDelete(name);
    ObjectCreate(name, OBJ_TEXT, 0, Time[i], y);
@@ -426,9 +427,9 @@ void DrawPeakLines()
       if(priceActionState.peakState1 == NO_PEAK || priceActionState.peakState2 == NO_PEAK)
          return; // No peaks found
 
-      printf("DrawPeakLines, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
+      // printf("DrawPeakLines, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
 
-      string objName = "peaksline_#" + IntegerToString(LinesCount++) + "_from_" + IntegerToString(priceActionState.peakTime2) + "_to_" + IntegerToString(priceActionState.peakTime1);
+      string objName = "peaksline_#" + IntegerToString(LinesCount++) + "_from_" + TimeToString(priceActionState.peakTime2) + "_to_" + TimeToString(priceActionState.peakTime1);
       color lineColor = clrWhite;
 
       int barIndex1 = iBarShift(NULL, 0, priceActionState.peakTime1);
@@ -459,21 +460,22 @@ void DrawPeakLines()
       ObjectSet(objName, OBJPROP_WIDTH, 2);
       ObjectSet(objName, OBJPROP_RAY, false);
 
-      Print("DrawPeakLines: ObjName=", objName);
+      if(PAverbose) Print("DrawPeakLines: ObjName=", objName);
 }
 
 //+------------------------------------------------------------------+
 //| Clean up old peak lines                                          |
 //+------------------------------------------------------------------+
-/*void CleanPeakLines()
+void CleanPeakLines()
 {
-   for(int p=1; p<PeakCount+100; p++)
+   int total = ObjectsTotal();        // Get total number of objects (main window)
+   for(int i = 0; i < total; i++)
    {
-      string objName = "peakline_" + IntegerToString(p-1) + "_" + IntegerToString(p);
-      ObjectDelete(objName);
+      string name = ObjectName(i);   // Retrieve the object's name by index
+      if(StringFind(name,"peaksline_#")>=0)
+         ObjectDelete(name);
    }
 }
-*/
 
 //+------------------------------------------------------------------+
 //| Clean up old peak labels                                         |
