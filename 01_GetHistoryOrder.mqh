@@ -55,3 +55,41 @@ int GetHistoryOrderByCloseTime(int& tickets[], int Magic, int dsc=1){  #define A
     return(nOrders); 
 }
 
+//+------------------------------------------------------------------+
+//| Function returning the last closed order by close time     |
+//+------------------------------------------------------------------+
+double GetLastClosedOrderProfitByTime()
+{
+    int totalClosedOrders = OrdersHistoryTotal();
+    int lastTicket = -1;
+    datetime lastCloseTime = 0;
+    double lastProfit = 0.0;
+    
+    if(totalClosedOrders == 0)
+    {
+        Print("No closed orders found in history");
+        return -1;
+    }
+    
+    // Loop through all closed orders to find the one with latest close time
+    for(int i = 0; i < totalClosedOrders; i++)
+    {
+        if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+        {
+            if(OrderCloseTime() > lastCloseTime)
+            {
+                lastCloseTime = OrderCloseTime();
+                lastTicket = OrderTicket();
+                lastProfit = OrderProfit();
+            }
+        }
+    }
+    
+    if(lastTicket != -1)
+    {
+        Print("Last closed order by time - Ticket: ", lastTicket, ", Close time: ", TimeToStr(lastCloseTime));
+    }
+    
+    return lastProfit;
+}
+
