@@ -155,7 +155,7 @@ PaResults ProcessBar(int i)
 
       if(PAverbose) printf("ProcessBar 3, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
 
-      VisualizePeakOverlay(i+1, peakState);
+      // VisualizePeakOverlay(i+1, peakState);
       // DrawPeakLines();
    }
 

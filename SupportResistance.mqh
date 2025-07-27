@@ -163,20 +163,20 @@ void CSupportResistance::SRUpdate(int i)
    for (int j = 0; j < ArraySize(currDaySupportPoints); j++)
    {
       string lineName = linePrefix + "Support_" + TimeToString(currDayStart, TIME_DATE) + "_" + IntegerToString(lineCounter++);
-      DrawHorizontalLine(lineName, currDaySupportPoints[j].price, currDaySupportPoints[j].time, barTime, clrBlue);
+      DrawHorizontalLine(lineName, currDaySupportPoints[j].price, currDaySupportPoints[j].time, barTime, clrGreen);
    }
    
    for (int j = 0; j < ArraySize(currDayResistancePoints); j++)
    {
       string lineName = linePrefix + "Resistance_" + TimeToString(currDayStart, TIME_DATE) + "_"  + IntegerToString(lineCounter++);
-      DrawHorizontalLine(lineName, currDayResistancePoints[j].price, currDayResistancePoints[j].time, barTime, clrBlue);
+      DrawHorizontalLine(lineName, currDayResistancePoints[j].price, currDayResistancePoints[j].time, barTime, clrRed);
    }
    
    // Draw previous day extreme lines if available
    if (prevDayHighest > 0)
    {
       string lineNameHigh = linePrefix + "PrevHigh_" + TimeToString(currDayStart, TIME_DATE) + "_"  + IntegerToString(lineCounter++);
-      DrawHorizontalLine(lineNameHigh, prevDayHighest, currDayStart, barTime, clrGreen);
+      DrawHorizontalLine(lineNameHigh, prevDayHighest, currDayStart, barTime, clrGreen,3);
       
       // Add to currDaySRpoints
       int size = ArraySize(currDaySRpoints);
@@ -187,7 +187,7 @@ void CSupportResistance::SRUpdate(int i)
    if (prevDayLowest > 0)
    {
       string lineNameLow = linePrefix + "PrevLow_" + TimeToString(currDayStart, TIME_DATE) + "_"  + IntegerToString(lineCounter++);
-      DrawHorizontalLine(lineNameLow, prevDayLowest, currDayStart, barTime, clrRed);
+      DrawHorizontalLine(lineNameLow, prevDayLowest, currDayStart, barTime, clrRed,3);
       
       // Add to currDaySRpoints
       int size = ArraySize(currDaySRpoints);
