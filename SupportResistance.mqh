@@ -6,12 +6,7 @@
 
 #property strict
 
-// Enums for trend and SR status
-enum SR_TREND_TYPE
-{
-   SR_UP_TREND = 1,
-   SR_DOWN_TREND = -1
-};
+#include <Falcon_B/enums.mqh>
 
 enum SR_STATUS
 {
@@ -31,6 +26,12 @@ struct SRPoint
    
    SRPoint() : price(0), time(0), isSupport(true) {}
    SRPoint(double p, datetime t, bool support) : price(p), time(t), isSupport(support) {}
+};
+
+struct SRresult
+{
+    SRPoint point;
+    SR_STATUS status;
 };
 
 class CSupportResistance
@@ -81,7 +82,7 @@ public:
    void SRUpdate(int i);
    
    // Check proximity to SR levels
-   SR_STATUS CheckNearSR(double price, datetime time, SR_TREND_TYPE trend);
+   SRresult CheckNearSR(double price, datetime time, TrendState trend);
    
    // Getter methods
    int GetSupportPointsCount() { return ArraySize(currDaySupportPoints); }
@@ -199,48 +200,104 @@ void CSupportResistance::SRUpdate(int i)
 //+------------------------------------------------------------------+
 //| Check if price is near support or resistance                    |
 //+------------------------------------------------------------------+
-SR_STATUS CSupportResistance::CheckNearSR(double price, datetime time, SR_TREND_TYPE trend)
+SRresult CSupportResistance::CheckNearSR(double price, datetime time, TrendState trend)
 {
+    SRresult res;
+    res.point.time = -1;
+    res.point.price = -1;
+    res.point.isSupport = false;
+    res.status = NOT_NEAR_SR;
+
    // Check against current day support points
    for (int i = 0; i < ArraySize(currDaySupportPoints); i++)
    {
       double priceDiff = currDaySupportPoints[i].price - price;
       
-      if (trend == SR_UP_TREND)
-      {
-         if (priceDiff > margin)
-            return BELOW_RESISTANCE;
-         else if (MathAbs(priceDiff) <= margin)
-            return ABOVE_RESISTANCE;
-      }
-      else if (trend == SR_DOWN_TREND)
+      if (trend == UP_TREND || trend == DOWN_TREND_RETRACEMENT)
       {
          if (priceDiff < -margin)
-            return ABOVE_SUPPORT;
+         {
+            res.point.time = currDaySupportPoints[i].time;
+            res.point.price = currDaySupportPoints[i].price;
+            res.point.isSupport = true;
+            res.status = ABOVE_RESISTANCE;
+            return res;
+         }
          else if (MathAbs(priceDiff) <= margin)
-            return BELOW_SUPPORT;
+         {
+            res.point.time = currDaySupportPoints[i].time;
+            res.point.price = currDaySupportPoints[i].price;
+            res.point.isSupport = true;
+            res.status = BELOW_RESISTANCE;
+            return res;
+         }
       }
+      else if (trend == DOWN_TREND || trend == UP_TREND_RETRACEMENT)
+      {
+         if (priceDiff > margin)
+         {
+            res.point.time = currDaySupportPoints[i].time;
+            res.point.price = currDaySupportPoints[i].price;
+            res.point.isSupport = true;
+            res.status = BELOW_SUPPORT;
+            return res;
+         }
+         else if (MathAbs(priceDiff) <= margin)
+         {
+            res.point.time = currDaySupportPoints[i].time;
+            res.point.price = currDaySupportPoints[i].price;
+            res.point.isSupport = true;
+            res.status = ABOVE_SUPPORT;
+            return res;
+         }
+      }
+      
    }
    
    // Check against current day resistance points
    for (int i = 0; i < ArraySize(currDayResistancePoints); i++)
    {
       double priceDiff = currDayResistancePoints[i].price - price;
-      
-      if (trend == SR_UP_TREND)
-      {
-         if (priceDiff > margin)
-            return BELOW_RESISTANCE;
-         else if (MathAbs(priceDiff) <= margin)
-            return ABOVE_RESISTANCE;
-      }
-      else if (trend == SR_DOWN_TREND)
+
+      if (trend == UP_TREND || trend == DOWN_TREND_RETRACEMENT)
       {
          if (priceDiff < -margin)
-            return ABOVE_SUPPORT;
+         {
+            res.point.time = currDayResistancePoints[i].time;
+            res.point.price = currDayResistancePoints[i].price;
+            res.point.isSupport = false;
+            res.status = ABOVE_RESISTANCE;
+            return res;
+         }
          else if (MathAbs(priceDiff) <= margin)
-            return BELOW_SUPPORT;
+         {
+            res.point.time = currDayResistancePoints[i].time;
+            res.point.price = currDayResistancePoints[i].price;
+            res.point.isSupport = false;
+            res.status = BELOW_RESISTANCE;
+            return res;
+         }
       }
+      else if (trend == DOWN_TREND || trend == UP_TREND_RETRACEMENT)
+      {
+         if (priceDiff > margin)
+         {
+            res.point.time = currDayResistancePoints[i].time;
+            res.point.price = currDayResistancePoints[i].price;
+            res.point.isSupport = false;
+            res.status = BELOW_SUPPORT;
+            return res;
+         }
+         else if (MathAbs(priceDiff) <= margin)
+         {
+            res.point.time = currDayResistancePoints[i].time;
+            res.point.price = currDayResistancePoints[i].price;
+            res.point.isSupport = false;
+            res.status = ABOVE_SUPPORT;
+            return res;
+         }
+      }
+      
    }
    
    // Check against previous day extreme points
@@ -248,23 +305,47 @@ SR_STATUS CSupportResistance::CheckNearSR(double price, datetime time, SR_TREND_
    {
       double priceDiff = currDaySRpoints[i].price - price;
       
-      if (trend == SR_UP_TREND)
-      {
-         if (priceDiff > margin)
-            return BELOW_RESISTANCE;
-         else if (MathAbs(priceDiff) <= margin)
-            return ABOVE_RESISTANCE;
-      }
-      else if (trend == SR_DOWN_TREND)
+      if (trend == UP_TREND || trend == DOWN_TREND_RETRACEMENT)
       {
          if (priceDiff < -margin)
-            return ABOVE_SUPPORT;
+         {
+            res.point.time = currDaySRpoints[i].time;
+            res.point.price = currDaySRpoints[i].price;
+            res.point.isSupport = false;
+            res.status = ABOVE_RESISTANCE;
+            return res;
+         }
          else if (MathAbs(priceDiff) <= margin)
-            return BELOW_SUPPORT;
+         {
+            res.point.time = currDaySRpoints[i].time;
+            res.point.price = currDaySRpoints[i].price;
+            res.point.isSupport = false;
+            res.status = BELOW_RESISTANCE;
+            return res;
+         }
+      }
+      else if (trend == DOWN_TREND || trend == UP_TREND_RETRACEMENT)
+      {
+         if (priceDiff > margin)
+         {
+            res.point.time = currDaySRpoints[i].time;
+            res.point.price = currDaySRpoints[i].price;
+            res.point.isSupport = true;
+            res.status = BELOW_SUPPORT;
+            return res;
+         }
+         else if (MathAbs(priceDiff) <= margin)
+         {
+            res.point.time = currDaySRpoints[i].time;
+            res.point.price = currDaySRpoints[i].price;
+            res.point.isSupport = true;
+            res.status = ABOVE_SUPPORT;
+            return res;
+         }
       }
    }
    
-   return NOT_NEAR_SR;
+   return res;
 }
 
 //+------------------------------------------------------------------+
