@@ -55,41 +55,71 @@ int GetHistoryOrderByCloseTime(int& tickets[], int Magic, int dsc=1){  #define A
     return(nOrders); 
 }
 
+int GetHistoryOrderByCloseTime(int& tickets[],datetime& OCTs[], double& profits[], int Magic, int dsc=1){  #define ASCENDING -1
+    /* https://forum.mql4.com/46182 zzuegg says history ordering "is not reliable
+     * (as said in the doc)" [not in doc] dabbler says "the order of entries is
+     * mysterious (by actual test)" */
+    int nOrders = 0, iOrders;                                                       // defining needed variables
+
+    for (int iPos=OrdersHistoryTotal()-1; iPos >= 0; iPos--)                        // for loop to scrol through all positions in history
+       {
+          if (OrderSelect(iPos, SELECT_BY_POS, MODE_HISTORY) &&                     // Only orders w/
+              OrderMagicNumber()  == Magic &&                                       // my magic number
+              OrderType()         <= OP_SELL)                                       // Avoid cr/bal forum.mql4.com/32363#325360
+             {
+                int      nextTkt = OrderTicket();                                   // Once the ticket is selected we save it's number to nextTkt var
+                datetime nextOCT = OrderCloseTime();  
+                double   nextProfit = OrderProfit();                                // We also select the time this order was closed
+                nOrders++;                                                          // Our objective was to have number of orders done by this EA...
+                ArrayResize(tickets,nOrders);                                       // Increase array size containing the tickets numbers
+                ArrayResize(OCTs,nOrders);      
+                ArrayResize(profits,nOrders);                                       // Increase array size containing the tickets close timings
+                  for (iOrders = nOrders - 1; iOrders > 0; iOrders--)               // This for loop need to manipulate through the "previous" ticket
+                     {  // Insertn sort.
+                          datetime    prevOCT     = OCTs[iOrders-1];                // Define the time when previous order was closed using the info from array
+                          if ((prevOCT - nextOCT) * dsc >= 0)     break;            // interrupt when we deal with the order that is last one
+                          int  prevTkt = tickets[iOrders-1];                        // Define the previous ticket number using info from array
+                          tickets[iOrders] = prevTkt;                               // Save ticket number to array
+                          OCTs[iOrders]    = prevOCT;                               // Save ticket time to array
+                          profits[iOrders] = nextProfit;                             // Save ticket profit to array
+                     }
+                tickets[iOrders] = nextTkt;                                         // Finally insert the next ticket number
+                OCTs[iOrders] = nextOCT;                                          // Insert the next ticket close time
+                profits[iOrders] = nextProfit;                                    // Insert the next ticket profit
+             }
+       }            
+    return(nOrders); 
+}
+
 //+------------------------------------------------------------------+
 //| Function returning the last closed order by close time     |
 //+------------------------------------------------------------------+
-double GetLastClosedOrderProfitByTime()
+double GetConsecutiveFailureCount(int Magic)
 {
-    int totalClosedOrders = OrdersHistoryTotal();
-    int lastTicket = -1;
-    datetime lastCloseTime = 0;
-    double lastProfit = 0.0;
-    
+   int tickets[];
+   datetime OCTs[];
+   double profits[];
+
+    int totalClosedOrders = GetHistoryOrderByCloseTime(tickets, OCTs, profits, Magic, 1); // 1 for ascending order
     if(totalClosedOrders == 0)
-    {
-        Print("No closed orders found in history");
-        return -1;
-    }
-    
-    // Loop through all closed orders to find the one with latest close time
+        return 0;
+
+    int failureCount = 0;
+
+    // Loop through all closed orders and count number of consecutive failures
     for(int i = 0; i < totalClosedOrders; i++)
     {
-        if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+        if(profits[i] < 0) // Check if the order was a failure
         {
-            if(OrderCloseTime() > lastCloseTime)
-            {
-                lastCloseTime = OrderCloseTime();
-                lastTicket = OrderTicket();
-                lastProfit = OrderProfit();
-            }
+            failureCount++;
+        }
+        else
+        {
+            // Reset count if we hit a successful order
+            break;
         }
     }
     
-    if(lastTicket != -1)
-    {
-        Print("Last closed order by time - Ticket: ", lastTicket, ", Close time: ", TimeToStr(lastCloseTime));
-    }
-    
-    return lastProfit;
+    return failureCount;
 }
 
