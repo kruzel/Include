@@ -82,7 +82,8 @@ public:
    void SRUpdate(int i);
    
    // Check proximity to SR levels
-   SRresult CheckNearSR(double price, datetime time, TrendState trend);
+   SRresult CheckNearSR(double price, TrendState trend);
+   int CheckSRCrossed(double price2, double price1); // Check if price crossed support/resistance levels
    
    // Getter methods
    int GetSupportPointsCount() { return ArraySize(currDaySupportPoints); }
@@ -200,7 +201,7 @@ void CSupportResistance::SRUpdate(int i)
 //+------------------------------------------------------------------+
 //| Check if price is near support or resistance                    |
 //+------------------------------------------------------------------+
-SRresult CSupportResistance::CheckNearSR(double price, datetime time, TrendState trend)
+SRresult CSupportResistance::CheckNearSR(double price, TrendState trend)
 {
     SRresult res;
     res.point.time = -1;
@@ -347,6 +348,60 @@ SRresult CSupportResistance::CheckNearSR(double price, datetime time, TrendState
    
    return res;
 }
+
+int CSupportResistance::CheckSRCrossed(double price2, double price1)
+{
+    int res = 0; // No crossing
+
+   // Check against current day support points
+   for (int i = 0; i < ArraySize(currDaySupportPoints); i++)
+   {
+      if (price1 > currDaySupportPoints[i].price && price2 < currDaySupportPoints[i].price)
+         {
+            res = 1;
+            return res;
+         }
+         else if (price1 < currDaySupportPoints[i].price && price2 > currDaySupportPoints[i].price)
+         {
+            res = 2;
+            return res;
+         }
+   }
+   
+   // Check against current day resistance points
+   for (int i = 0; i < ArraySize(currDayResistancePoints); i++)
+   {
+        if (price1 > currDayResistancePoints[i].price && price2 < currDayResistancePoints[i].price)
+         {
+            res = 1;
+            return res;
+         }
+         else if (price1 < currDayResistancePoints[i].price && price2 > currDayResistancePoints[i].price)
+         {
+            res = 2;
+            return res;
+         }
+      
+   }
+   
+   // Check against previous day extreme points
+   for (int i = 0; i < ArraySize(currDaySRpoints); i++)
+   {
+      if (price1 > currDaySRpoints[i].price && price2 < currDaySRpoints[i].price)
+         {
+            res = 1;
+            return res;
+         }
+         else if (price1 < currDaySRpoints[i].price && price2 > currDaySRpoints[i].price)
+         {
+            res = 2;
+            return res;
+         }
+   }
+   
+   return res;
+}
+
 
 //+------------------------------------------------------------------+
 //| Helper method to check if it's a new day                        |
