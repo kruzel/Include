@@ -109,7 +109,7 @@ double GetConsecutiveFailureCount(int Magic)
     // Loop through all closed orders and count number of consecutive failures
     for(int i = 0; i < totalClosedOrders; i++)
     {
-        if(profits[i] < 0) // Check if the order was a failure
+        if(profits[i] <= 0) // Check if the order was a failure
         {
             failureCount++;
         }
