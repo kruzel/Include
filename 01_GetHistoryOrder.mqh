@@ -92,6 +92,19 @@ int GetHistoryOrderByCloseTime(int& tickets[],datetime& OCTs[], double& profits[
 }
 
 //+------------------------------------------------------------------+
+//| Get start of day                                                 |
+//+------------------------------------------------------------------+
+datetime GetDayStart(datetime time)
+{
+   MqlDateTime dt;
+   TimeToStruct(time, dt);
+   dt.hour = 0;
+   dt.min = 0;
+   dt.sec = 0;
+   return StructToTime(dt);
+}
+
+//+------------------------------------------------------------------+
 //| Function returning the last closed order by close time     |
 //+------------------------------------------------------------------+
 double GetConsecutiveFailureCount(int Magic)
@@ -99,6 +112,8 @@ double GetConsecutiveFailureCount(int Magic)
    int tickets[];
    datetime OCTs[];
    double profits[];
+
+   datetime dayStart = GetDayStart(TimeCurrent());
 
     int totalClosedOrders = GetHistoryOrderByCloseTime(tickets, OCTs, profits, Magic, 1); // 1 for ascending order
     if(totalClosedOrders == 0)
@@ -109,7 +124,7 @@ double GetConsecutiveFailureCount(int Magic)
     // Loop through all closed orders and count number of consecutive failures
     for(int i = 0; i < totalClosedOrders; i++)
     {
-        if(profits[i] <= 0) // Check if the order was a failure
+        if(profits[i] <= 0 && OCTs[i] > dayStart) // Check if the order was a failure
         {
             failureCount++;
         }

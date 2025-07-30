@@ -469,7 +469,7 @@ void CSupportResistance::FindZigZagPoints(datetime dayStart, datetime dayEnd)
    // Search for ZigZag points from start to end of day
    for (int i = startBar; i >= endBar; i--)
    {
-      double zigzagValue = iCustom(Symbol(), Period(), "ZigZag", zigzagDepth, zigzagDeviation, zigzagBackstep, 0, i);
+      double zigzagValue = iCustom(Symbol(), Period(), "Falcon_B_Indicator\\ZigZag", zigzagDepth, zigzagDeviation, zigzagBackstep, 0, i);
       
       if (zigzagValue != 0 && zigzagValue != EMPTY_VALUE)
       {
