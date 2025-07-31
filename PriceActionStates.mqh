@@ -49,9 +49,9 @@ static PriceActionState priceActionState;
 //| Setup parameters
 //+------------------------------------------------------------------+
 input double TrendMargin = 0; // points
-input bool PAverbose = true;
-input bool UseVisualizePeakOverlay = true; // Visualize peaks on chart
-input bool UseDrawPeakLines = true; // Draw lines for peaks
+input bool PAverbose = false; // Verbose output for debugging
+input bool UseVisualizePeakOverlay = false; // Visualize peaks on chart
+input bool UseDrawPeakLines = false; // Draw lines for peaks
 
 int PaInit()
 {
