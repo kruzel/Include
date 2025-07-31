@@ -49,7 +49,9 @@ static PriceActionState priceActionState;
 //| Setup parameters
 //+------------------------------------------------------------------+
 input double TrendMargin = 0; // points
-input bool PAverbose = false;
+input bool PAverbose = true;
+input bool UseVisualizePeakOverlay = true; // Visualize peaks on chart
+input bool UseDrawPeakLines = true; // Draw lines for peaks
 
 int PaInit()
 {
@@ -148,8 +150,8 @@ PaResults ProcessBar(int i)
 
       if(PAverbose) printf("ProcessBar 3, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
 
-      // VisualizePeakOverlay(i+1, peakState);
-      // DrawPeakLines();
+      if(UseVisualizePeakOverlay) VisualizePeakOverlay(i+1, peakState);
+      if(UseDrawPeakLines) DrawPeakLines();
    }
 
    // results
@@ -166,6 +168,14 @@ PaResults ProcessBar(int i)
    //                   ", peakState2=", GetPeakDescription((priceActionState.peakState2)), "--------------------");
 
    return results;
+}
+
+//+------------------------------------------------------------------+
+//| return last two peaks                                            |
+//+------------------------------------------------------------------+
+PriceActionState GetPrevPeaks()
+{
+   return priceActionState;
 }
 
 //+------------------------------------------------------------------+

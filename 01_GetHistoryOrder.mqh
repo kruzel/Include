@@ -65,7 +65,8 @@ int GetHistoryOrderByCloseTime(int& tickets[],datetime& OCTs[], double& profits[
        {
           if (OrderSelect(iPos, SELECT_BY_POS, MODE_HISTORY) &&                     // Only orders w/
               OrderMagicNumber()  == Magic &&                                       // my magic number
-              OrderType()         <= OP_SELL)                                       // Avoid cr/bal forum.mql4.com/32363#325360
+              OrderType()         <= OP_SELL &&
+              OrderSymbol() == Symbol())                                       // Avoid cr/bal forum.mql4.com/32363#325360
              {
                 int      nextTkt = OrderTicket();                                   // Once the ticket is selected we save it's number to nextTkt var
                 datetime nextOCT = OrderCloseTime();  
