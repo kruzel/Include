@@ -89,8 +89,8 @@ int PaInit()
 int PaDeinit()
 {
    // Clean up all objects before redrawing
-   // CleanPeakLines();
    CleanPeakLabels();
+   CleanPeakLines();
    
    return 0;
 }
@@ -402,7 +402,7 @@ void VisualizePeakOverlay(int i, int peak_state)
    color col = clrBlack;
    int Pip;
    if(Digits==5 || Digits==3) Pip=10;else Pip=1;
-   double y_offset = 0.1 * Pip * Point; // Small offset above/below close
+   double y_offset = 100 * Point; // Small offset above/below close
    double y = 0;
 
    switch(peak_state) {
