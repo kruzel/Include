@@ -4,7 +4,7 @@
 //+------------------------------------------------------------------+
 
 
-#include <Falcon_B/enums.mqh>
+#include <Falcon_B_Include/enums.mqh>
 
 enum PeakState {
    NO_PEAK = 0,
@@ -42,6 +42,13 @@ struct PriceActionState
    datetime peakTime2;
    double  peakClose2; // before last
    PeakState peakState2;
+   
+   datetime peakTimeHighest;
+   double  peakCloseHighest; //last
+   PeakState peakStateHighest;
+   datetime peakTimeLowest;
+   double  peakCloseLowest; // before last
+   PeakState peakStateLowest;
 };
 static PriceActionState priceActionState;
 
@@ -70,6 +77,13 @@ int PaInit()
    priceActionState.peakTime2 = Time[Bars-1];
    priceActionState.peakClose2 = -1; // before last
    priceActionState.peakState2 = NO_PEAK;
+   
+   priceActionState.peakTimeHighest = Time[Bars-1];
+   priceActionState.peakCloseHighest = -1; 
+   priceActionState.peakStateHighest = NO_PEAK;
+   priceActionState.peakTimeLowest = Time[Bars-1];
+   priceActionState.peakCloseLowest = -1; 
+   priceActionState.peakStateLowest = NO_PEAK;
    
    int numBarsToProcess = MathMin(Bars - 2, 100); // Process last 100 bars or less if not enough data
 
@@ -177,6 +191,7 @@ PriceActionState GetPrevPeaks()
 {
    return priceActionState;
 }
+
 
 //+------------------------------------------------------------------+
 //| Detect the basic trend between two closes                        |
