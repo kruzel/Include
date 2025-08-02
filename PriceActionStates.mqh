@@ -77,7 +77,7 @@ int PaInit()
    priceActionState.peakTime2 = Time[Bars-1];
    priceActionState.peakClose2 = -1; // before last
    priceActionState.peakState2 = NO_PEAK;
-   
+
    priceActionState.peakTimeHighest = Time[Bars-1];
    priceActionState.peakCloseHighest = -1; 
    priceActionState.peakStateHighest = NO_PEAK;
@@ -161,6 +161,19 @@ PaResults ProcessBar(int i)
       priceActionState.peakTime1 = Time[i+1];
       priceActionState.peakClose1 = Close[i+1]; //last
       priceActionState.peakState1 = peakState;
+
+      if(peakState == HIGHER_HIGH_PEAK)
+      {
+         priceActionState.peakTimeHighest = Time[i+1];
+         priceActionState.peakCloseHighest = Close[i+1]; 
+         priceActionState.peakStateHighest = HIGHER_HIGH_PEAK;
+      }
+      else if(peakState == LOWER_LOW_PEAK)
+      {
+         priceActionState.peakTimeLowest = Time[i+1];
+         priceActionState.peakCloseLowest = Close[i+1]; 
+         priceActionState.peakStateLowest = LOWER_LOW_PEAK;
+      }
 
       if(PAverbose) printf("ProcessBar 3, peakTime1=%s, peakTime2=%s", TimeToString(priceActionState.peakTime1), TimeToString(priceActionState.peakTime2));
 
