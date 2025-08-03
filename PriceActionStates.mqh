@@ -55,7 +55,7 @@ static PriceActionState priceActionState;
 //+------------------------------------------------------------------+
 //| Setup parameters
 //+------------------------------------------------------------------+
-input double TrendMargin = 0; // points
+input double TrendMargin = 0; // Trend Detection Margin
 input bool PAverbose = false; // Verbose output for debugging
 input bool UseVisualizePeakOverlay = false; // Visualize peaks on chart
 input bool UseDrawPeakLines = false; // Draw lines for peaks
@@ -430,7 +430,7 @@ void VisualizePeakOverlay(int i, int peak_state)
    color col = clrBlack;
    int Pip;
    if(Digits==5 || Digits==3) Pip=10;else Pip=1;
-   double y_offset = 100 * Point; // Small offset above/below close
+   double y_offset = Point; // Small offset above/below close
    double y = 0;
 
    switch(peak_state) {
