@@ -6,6 +6,15 @@
 
 #include <Falcon_B_Include/enums.mqh>
 
+//+------------------------------------------------------------------+
+//| Setup parameters
+//+------------------------------------------------------------------+
+extern string  HeaderPA="----------Trend States Detection Settings-----------";
+extern double TrendMargin = 0; // Trend Detection Margin
+extern bool PAverbose = false; // Verbose output for debugging
+extern bool UseVisualizePeakOverlay = true; // Visualize peaks on chart
+extern bool UseDrawPeakLines = false; // Draw lines for peaks
+
 enum PeakState {
    NO_PEAK = 0,
    LOWER_HIGH_PEAK = 1,
@@ -51,14 +60,6 @@ struct PriceActionState
    PeakState peakStateLowest;
 };
 static PriceActionState priceActionState;
-
-//+------------------------------------------------------------------+
-//| Setup parameters
-//+------------------------------------------------------------------+
-input double TrendMargin = 0; // Trend Detection Margin
-input bool PAverbose = false; // Verbose output for debugging
-input bool UseVisualizePeakOverlay = false; // Visualize peaks on chart
-input bool UseDrawPeakLines = false; // Draw lines for peaks
 
 int PaInit()
 {
@@ -284,15 +285,22 @@ TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDire
    double prevLowClose = -1;
    double prevHighClose = -1;
 
-   if(priceActionState.peakState1 != LOWER_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK)
+   if((priceActionState.peakState1 != LOWER_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK) &&
+      (priceActionState.peakState2 != HIGHER_LOW_PEAK || priceActionState.peakState2 == LOWER_LOW_PEAK))
+   {
       prevHighClose = priceActionState.peakClose1;
-   else if(priceActionState.peakState1 != HIGHER_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK)
-      prevLowClose = priceActionState.peakClose1;
-   
-   if(priceActionState.peakState2 != LOWER_HIGH_PEAK || priceActionState.peakState2 == HIGHER_HIGH_PEAK)
-      prevHighClose = priceActionState.peakClose2;
-   else if(priceActionState.peakState2 != HIGHER_LOW_PEAK || priceActionState.peakState2 == LOWER_LOW_PEAK)
       prevLowClose = priceActionState.peakClose2;
+   }
+   else if((priceActionState.peakState1 != HIGHER_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK) && 
+      (priceActionState.peakState2 != LOWER_HIGH_PEAK || priceActionState.peakState2 == HIGHER_HIGH_PEAK))
+   {
+      prevLowClose = priceActionState.peakClose1;
+      prevHighClose = priceActionState.peakClose2;
+   }  
+   else
+   {
+      Print("DetectTrendState failed to find prevous peaks");
+   }
 
    //if(PAverbose) Print("DetectTrendState, close0=", close0, ", prevLowClose=", prevLowClose, ", prevHighClose=", prevHighClose);
       
@@ -321,11 +329,12 @@ TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDire
          res = UP_TREND;
          if(PAverbose) Print("DetectTrendState UP_TREND_RETRACEMENT -> UP_TREND");
       }
-      else if(prevLowClose == -1 || Close[i+1]  < prevLowClose) 
+      else if(lastBarDirection == DOWN_TREND && (prevLowClose == -1 || Close[i]  < prevLowClose)) 
       {
          res = DOWN_TREND;
          if(PAverbose) Print("DetectTrendState UP_TREND_RETRACEMENT -> DOWN_TREND");
-      }
+      } else
+         res = UP_TREND_RETRACEMENT;
    }
    else if(trendState == DOWN_TREND && lastBarDirection == UP_TREND)
    {
@@ -339,11 +348,13 @@ TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDire
          res = DOWN_TREND;
          if(PAverbose) Print("DetectTrendState DOWN_TREND_RETRACEMENT -> DOWN_TREND");
        }
-       else if (prevHighClose == -1 || Close[i+1] > prevHighClose) 
+       else if (lastBarDirection == UP_TREND && (prevHighClose == -1 || Close[i] > prevHighClose)) 
        {
          res = UP_TREND;
          if(PAverbose) Print("DetectTrendState DOWN_TREND_RETRACEMENT -> UP_TREND");
        }
+       else
+         res = DOWN_TREND_RETRACEMENT;
    }
    
    return res;
@@ -365,7 +376,7 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
    if((trendState == UP_TREND || trendState == DOWN_TREND_RETRACEMENT) && (newTrend == DOWN_TREND || newTrend == UP_TREND_RETRACEMENT))
    {
       //if prev peak is high
-      if(priceActionState.peakState2 == LOWER_HIGH_PEAK && Close[i+1] > priceActionState.peakClose2)
+      if(priceActionState.peakState2 == LOWER_HIGH_PEAK && Close[i] > priceActionState.peakClose2)
       {
          peak_state = HIGHER_HIGH_PEAK;
          if(PAverbose) Print("DetectPeakState HH");
@@ -392,7 +403,7 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
    else if((trendState == DOWN_TREND || trendState == UP_TREND_RETRACEMENT) && (newTrend == UP_TREND || newTrend == DOWN_TREND_RETRACEMENT))
    {
       //if prev peak is high
-      if(priceActionState.peakState2 == HIGHER_LOW_PEAK && Close[i+1] < priceActionState.peakClose2)
+      if(priceActionState.peakState2 == HIGHER_LOW_PEAK && Close[1] < priceActionState.peakClose2)
       {
          peak_state = LOWER_LOW_PEAK;
          if(PAverbose) Print("DetectPeakState LL");
