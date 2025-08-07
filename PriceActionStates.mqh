@@ -445,9 +445,9 @@ void VisualizePeakOverlay(int i, int peak_state)
    double y = 0;
 
    switch(peak_state) {
-      case LOWER_HIGH_PEAK:   txt = "LH";  col = clrBlack;  y = High[i] + 4*y_offset; break;   // "H"
+      case LOWER_HIGH_PEAK:   txt = "LH";  col = clrBlack;  y = High[i] + 40*y_offset; break;   // "H"
       case HIGHER_LOW_PEAK:    txt = "HL";  col = clrBlack;   y = Low[i] - 2*y_offset; break;  // "L"
-      case HIGHER_HIGH_PEAK:  txt = "HH";    col = clrBlack;  y = High[i] + 4*y_offset; break;
+      case HIGHER_HIGH_PEAK:  txt = "HH";    col = clrBlack;  y = High[i] + 40*y_offset; break;
       case LOWER_LOW_PEAK:    txt = "LL";    col = clrBlack;   y = Low[i] - 2*y_offset; break;
       default:  return; //              ObjectDelete("peak_" + IntegerToString(i)); return;
    }
