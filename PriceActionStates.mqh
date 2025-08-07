@@ -524,10 +524,12 @@ void CleanPeakLines()
 //+------------------------------------------------------------------+
 void CleanPeakLabels()
 {
-   for(int i=0; i<Bars; i++)
+    int total = ObjectsTotal();        // Get total number of objects (main window)
+   for(int i = 0; i < total; i++)
    {
-      string name = "peak_" + IntegerToString(i);
-      ObjectDelete(name);
+      string name = ObjectName(i);   // Retrieve the object's name by index
+      if(StringFind(name,"peak_")>=0)
+         ObjectDelete(name);
    }
 }
 
