@@ -439,24 +439,35 @@ void VisualizePeakOverlay(int i, int peak_state)
    static int peaksCountr = 0;
    string txt = "";
    color col = clrBlack;
-   int Pip;
-   if(Digits==5 || Digits==3) Pip=10;else Pip=1;
-   double y_offset = Point; // Small offset above/below close
+   
+   // Calculate offset based on visible chart price range
+   double chartHigh = WindowPriceMax();
+   double chartLow = WindowPriceMin();
+   double chartRange = chartHigh - chartLow;
+   double y_offset = chartRange * 0.02; // Use 2% of visible chart range as offset
    double y = 0;
 
    switch(peak_state) {
-      case LOWER_HIGH_PEAK:   txt = "LH";  col = clrBlack;  y = High[i] + 40*y_offset; break;   // "H"
-      case HIGHER_LOW_PEAK:    txt = "HL";  col = clrBlack;   y = Low[i] - 2*y_offset; break;  // "L"
-      case HIGHER_HIGH_PEAK:  txt = "HH";    col = clrBlack;  y = High[i] + 40*y_offset; break;
-      case LOWER_LOW_PEAK:    txt = "LL";    col = clrBlack;   y = Low[i] - 2*y_offset; break;
-      default:  return; //              ObjectDelete("peak_" + IntegerToString(i)); return;
+      case LOWER_HIGH_PEAK:   txt = "LH";  col = clrGreen;     y = High[i] + y_offset; break;
+      case HIGHER_LOW_PEAK:   txt = "HL";  col = clrRed;    y = Low[i] - y_offset; break;
+      case HIGHER_HIGH_PEAK:  txt = "HH";  col = clrGreen;   y = High[i] + y_offset; break;
+      case LOWER_LOW_PEAK:    txt = "LL";  col = clrRed;  y = Low[i] - y_offset; break;
+      default:  return;
    }
    string name = "peak_" + IntegerToString(peaksCountr++) + "_time_" + TimeToString(Time[i], TIME_MINUTES) + "_" + GetPeakDescription((PeakState)peak_state);
-   if(PAverbose) Print("VisualizePeakOverlay: i=", i, " name=", name, ", y=", y);
+   if(PAverbose) Print("VisualizePeakOverlay: i=", i, " name=", name, ", y=", y, ", y_offset=", y_offset, ", chartRange=", chartRange);
 
    ObjectDelete(name);
-   ObjectCreate(name, OBJ_TEXT, 0, Time[i], y);
-   ObjectSetText(name, txt, 12, "Arial", col);
+   if(ObjectCreate(name, OBJ_TEXT, 0, Time[i], y))
+   {
+      ObjectSetText(name, txt, 12, "Arial Bold", col);
+      ObjectSet(name, OBJPROP_CORNER, 0);
+      ObjectSet(name, OBJPROP_ANCHOR, ANCHOR_CENTER);
+   }
+   else
+   {
+      if(PAverbose) Print("Failed to create text object: ", name);
+   }
 }
 
 //+------------------------------------------------------------------+
