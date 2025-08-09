@@ -73,7 +73,7 @@ private:
    
 public:
    // Constructor
-   CSupportResistance(double marginPips = 10.0, int depth = 12, int deviation = 5, int backstep = 3);
+   CSupportResistance(double marginPoints = 0.1, int depth = 12, int deviation = 5, int backstep = 3);
    
    // Destructor
    ~CSupportResistance();
@@ -101,9 +101,9 @@ public:
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
 //+------------------------------------------------------------------+
-CSupportResistance::CSupportResistance(double marginPips = 10.0, int depth = 12, int deviation = 5, int backstep = 3)
+CSupportResistance::CSupportResistance(double marginPoints = 0.1, int depth = 12, int deviation = 5, int backstep = 3)
 {
-   margin = marginPips * P * Point; // convert to price 
+   margin = marginPoints * Point; // convert to price 
    zigzagDepth = depth;
    zigzagDeviation = deviation;
    zigzagBackstep = backstep;

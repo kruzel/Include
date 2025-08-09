@@ -48,7 +48,7 @@ public:
         {
          ObjectCreate(0, frameName, OBJ_RECTANGLE_LABEL, 0, 0, 0);
          ObjectSetInteger(0, frameName, OBJPROP_XDISTANCE, 205);
-         ObjectSetInteger(0, frameName, OBJPROP_YDISTANCE, 5);
+         ObjectSetInteger(0, frameName, OBJPROP_YDISTANCE, 15);
          ObjectSetInteger(0, frameName, OBJPROP_XSIZE, 110);
          ObjectSetInteger(0, frameName, OBJPROP_YSIZE, 50);
          ObjectSetInteger(0, frameName, OBJPROP_CORNER, 0);
@@ -62,7 +62,7 @@ public:
         {
          ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0);
          ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, 220); // Center in frame (205 + 110/2 = 260)
-         ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, 10);  // Above button (button at Y=30, label at Y=15)
+         ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, 20);  // Above button (button at Y=30, label at Y=15)
          ObjectSetInteger(0, labelName, OBJPROP_CORNER, 0);
          ObjectSetString(0, labelName, OBJPROP_TEXT, " AutoTrading ");
          ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 10);
@@ -74,7 +74,7 @@ public:
         {
          ObjectCreate(0, buttonOnName, OBJ_BUTTON, 0, 0, 0);
          ObjectSetInteger(0, buttonOnName, OBJPROP_XDISTANCE, 210); // Frame starts at 205, button at 210 (5px margin)
-         ObjectSetInteger(0, buttonOnName, OBJPROP_YDISTANCE, 30);  // Frame starts at 5, button at 10 (5px margin)
+         ObjectSetInteger(0, buttonOnName, OBJPROP_YDISTANCE, 40);  // Frame starts at 5, button at 10 (5px margin)
          ObjectSetInteger(0, buttonOnName, OBJPROP_XSIZE, 100);     // Frame width 190, button 60 (5px margin each side)
          ObjectSetInteger(0, buttonOnName, OBJPROP_YSIZE, 20);     // Frame height 50, button 20 (5px margin each side)
          ObjectSetString(0, buttonOnName, OBJPROP_TEXT, "  Enabled  "); // Add margin with spaces
