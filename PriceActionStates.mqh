@@ -59,9 +59,39 @@ struct PriceActionState
    double  peakCloseLowest; // before last
    PeakState peakStateLowest;
 };
-static PriceActionState priceActionState;
 
-int PaInit()
+//+------------------------------------------------------------------+
+//| PriceActionStates Class Definition                               |
+//+------------------------------------------------------------------+
+class CPriceActionStates
+{
+private:
+   PriceActionState priceActionState;
+   
+   // Private helper methods
+   PaResults ProcessBar(int i);
+   TrendState DetectBarDirection(double prevClose, double currClose);
+   string GetPeakDescription(PeakState peakState);
+   string GetTrendDescription(TrendState trendState);
+   TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDirection);
+   PeakState DetectPeakState(int i, int trendState, int newTrend);
+   void VisualizePeakOverlay(int i, int peak_state);
+   void DrawPeakLines();
+   void CleanPeakLines();
+   void CleanPeakLabels();
+
+public:
+   // Public methods
+   int Init();
+   int Deinit();
+   PaResults ProcessBars(int i);
+   PriceActionState GetPrevPeaks();
+};
+
+//+------------------------------------------------------------------+
+//| Public Method: Init (from PaInit)                                |
+//+------------------------------------------------------------------+
+int CPriceActionStates::Init()
 {
    PaResults results;
    results.errorCode = 0; // No error
@@ -101,7 +131,10 @@ int PaInit()
    return(0);
 }
 
-int PaDeinit()
+//+------------------------------------------------------------------+
+//| Public Method: Deinit (from PaDeinit)                            |
+//+------------------------------------------------------------------+
+int CPriceActionStates::Deinit()
 {
    // Clean up all objects before redrawing
    CleanPeakLabels();
@@ -111,9 +144,9 @@ int PaDeinit()
 }
 
 //+------------------------------------------------------------------+
-//| Custom indicator iteration function                              |
+//| Public Method: ProcessBars (from PaProcessBars)                  |
 //+------------------------------------------------------------------+
-PaResults PaProcessBars(int i)
+PaResults CPriceActionStates::ProcessBars(int i)
 {
    PaResults results;
    results.errorCode = 0; // Error code 1 indicates processing error
@@ -130,9 +163,17 @@ PaResults PaProcessBars(int i)
 }
 
 //+------------------------------------------------------------------+
-//| Process logic for a single bar                                   |
+//| Public Method: GetPrevPeaks                                      |
 //+------------------------------------------------------------------+
-PaResults ProcessBar(int i)
+PriceActionState CPriceActionStates::GetPrevPeaks()
+{
+   return priceActionState;
+}
+
+//+------------------------------------------------------------------+
+//| Private Method: ProcessBar                                       |
+//+------------------------------------------------------------------+
+PaResults CPriceActionStates::ProcessBar(int i)
 {
    PaResults results;
    results.errorCode = 0; // Error code 1 indicates processing error
@@ -199,18 +240,9 @@ PaResults ProcessBar(int i)
 }
 
 //+------------------------------------------------------------------+
-//| return last two peaks                                            |
+//| Private Method: DetectBarDirection                               |
 //+------------------------------------------------------------------+
-PriceActionState GetPrevPeaks()
-{
-   return priceActionState;
-}
-
-
-//+------------------------------------------------------------------+
-//| Detect the basic trend between two closes                        |
-//+------------------------------------------------------------------+
-TrendState DetectBarDirection(double prevClose, double currClose)
+TrendState CPriceActionStates::DetectBarDirection(double prevClose, double currClose)
 {
    if(currClose > prevClose + Point*TrendMargin)
    {
@@ -230,9 +262,9 @@ TrendState DetectBarDirection(double prevClose, double currClose)
 }
 
 //+------------------------------------------------------------------+
-//| Get peak state description          |
+//| Private Method: GetPeakDescription                               |
 //+------------------------------------------------------------------+
-string GetPeakDescription(PeakState peakState)
+string CPriceActionStates::GetPeakDescription(PeakState peakState)
 {
    switch(peakState)
    {
@@ -250,10 +282,11 @@ string GetPeakDescription(PeakState peakState)
          return "UNKNOWN_PEAK_STATE";
    }
 }
+
 //+------------------------------------------------------------------+
-//| Get trend state description          |
+//| Private Method: GetTrendDescription                              |
 //+------------------------------------------------------------------+
-string GetTrendDescription(TrendState trendState)
+string CPriceActionStates::GetTrendDescription(TrendState trendState)
 {
    switch(trendState)
    {
@@ -272,9 +305,9 @@ string GetTrendDescription(TrendState trendState)
    }
 }
 //+------------------------------------------------------------------+
-//| Detect state: retracement, continuation, reversal, etc.          |
+//| Private Method: DetectTrendState                                 |
 //+------------------------------------------------------------------+
-TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDirection)
+TrendState CPriceActionStates::DetectTrendState(int i, TrendState trendState, TrendState lastBarDirection)
 {
    TrendState res = trendState;
 
@@ -361,9 +394,9 @@ TrendState DetectTrendState(int i, TrendState trendState, TrendState lastBarDire
 }
 
 //+------------------------------------------------------------------+
-//| Detect peaks based on price action logic                         |
+//| Private Method: DetectPeakState                                  |
 //+------------------------------------------------------------------+
-PeakState DetectPeakState(int i, int trendState, int newTrend)
+PeakState CPriceActionStates::DetectPeakState(int i, int trendState, int newTrend)
 {
    //printf("DetectPeakState %s -> %s",GetTrendDescription((TrendState) trendState), GetTrendDescription((TrendState)  newTrend));
 
@@ -432,9 +465,9 @@ PeakState DetectPeakState(int i, int trendState, int newTrend)
 }
 
 //+------------------------------------------------------------------+
-//| Visualize peak: draw text at close price (overlay on chart)      |
+//| Private Method: VisualizePeakOverlay                             |
 //+------------------------------------------------------------------+
-void VisualizePeakOverlay(int i, int peak_state)
+void CPriceActionStates::VisualizePeakOverlay(int i, int peak_state)
 {
    static int peaksCountr = 0;
    string txt = "";
@@ -471,9 +504,9 @@ void VisualizePeakOverlay(int i, int peak_state)
 }
 
 //+------------------------------------------------------------------+
-//| Draw lines between consecutive confirmed peaks                   |
+//| Private Method: DrawPeakLines                                    |
 //+------------------------------------------------------------------+
-void DrawPeakLines()
+void CPriceActionStates::DrawPeakLines()
 {
       static int LinesCount = 0;
 
@@ -517,9 +550,9 @@ void DrawPeakLines()
 }
 
 //+------------------------------------------------------------------+
-//| Clean up old peak lines                                          |
+//| Private Method: CleanPeakLines                                   |
 //+------------------------------------------------------------------+
-void CleanPeakLines()
+void CPriceActionStates::CleanPeakLines()
 {
    int total = ObjectsTotal();        // Get total number of objects (main window)
    for(int i = 0; i < total; i++)
@@ -531,9 +564,9 @@ void CleanPeakLines()
 }
 
 //+------------------------------------------------------------------+
-//| Clean up old peak labels                                         |
+//| Private Method: CleanPeakLabels                                  |
 //+------------------------------------------------------------------+
-void CleanPeakLabels()
+void CPriceActionStates::CleanPeakLabels()
 {
     int total = ObjectsTotal();        // Get total number of objects (main window)
    for(int i = 0; i < total; i++)
@@ -543,5 +576,3 @@ void CleanPeakLabels()
          ObjectDelete(name);
    }
 }
-
-//+------------------------------------------------------------------+
