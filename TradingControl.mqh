@@ -28,7 +28,7 @@ private:
 public:
    CTradingControl()
      {
-      tradingEnabled = true;
+      tradingEnabled = false;
       buttonOnId = 10001;
       buttonOnName = "AutoTradingBtn";
      }
@@ -77,12 +77,12 @@ public:
          ObjectSetInteger(0, buttonOnName, OBJPROP_YDISTANCE, 40);  // Frame starts at 5, button at 10 (5px margin)
          ObjectSetInteger(0, buttonOnName, OBJPROP_XSIZE, 100);     // Frame width 190, button 60 (5px margin each side)
          ObjectSetInteger(0, buttonOnName, OBJPROP_YSIZE, 20);     // Frame height 50, button 20 (5px margin each side)
-         ObjectSetString(0, buttonOnName, OBJPROP_TEXT, "  Enabled  "); // Add margin with spaces
+         ObjectSetString(0, buttonOnName, OBJPROP_TEXT, "  Disabled  "); // Add margin with spaces
          ObjectSetInteger(0, buttonOnName, OBJPROP_CORNER, 5);
-         ObjectSetInteger(0, buttonOnName, OBJPROP_COLOR, clrGreen);
+         ObjectSetInteger(0, buttonOnName, OBJPROP_COLOR, clrRed);
          ObjectSetInteger(0, buttonOnName, OBJPROP_FONTSIZE, 10);
          ObjectSetInteger(0, buttonOnName, OBJPROP_ALIGN, ALIGN_CENTER);
-        ObjectSetInteger(0, buttonOnName, OBJPROP_STATE, true);
+        ObjectSetInteger(0, buttonOnName, OBJPROP_STATE, tradingEnabled);
         }
      }
 
