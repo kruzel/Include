@@ -139,10 +139,11 @@ double GetConsecutiveFailureCount(int Magic)
     return failureCount;
 }
 
-bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type)
+bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, double& price)
 {
     profit = 0;
     type = -1;
+    price = 0;
 
     // Loop through all closed orders
     for(int i = OrdersHistoryTotal() - 1; i >= 0; i--)
@@ -157,6 +158,7 @@ bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type)
                     {
                          profit = OrderProfit();
                          type = OrderType();
+                         price = OrderClosePrice();
                          return true; // Return true if we found the order
                     }
               }
