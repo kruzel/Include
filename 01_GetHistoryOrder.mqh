@@ -167,3 +167,27 @@ bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, dou
 
     return false; // Return false if we didn't find the order
 }
+
+double GetProfitToday(int Magic)
+{
+    double totalProfit = 0;
+
+    // Loop through all closed orders
+    for(int i = OrdersHistoryTotal() - 1; i >= 0; i--)
+    {
+         if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+         {
+              // Check if the order is from the specified magic number
+              if(OrderMagicNumber() == Magic)
+              {
+                   // Check if the order was closed today
+                   if(OrderCloseTime() >= GetDayStart(TimeCurrent()))
+                   {
+                        totalProfit += OrderProfit();
+                   }
+              }
+         }
+    }
+
+    return totalProfit;
+}

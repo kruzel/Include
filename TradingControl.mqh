@@ -24,6 +24,10 @@ private:
    string frameName;
    string labelName;
    string buttonOnName;
+   string winTargetLabel;
+   string winTargetEdit;
+   string lossTargetLabel;
+   string lossTargetEdit;
 
 public:
    CTradingControl()
@@ -40,7 +44,7 @@ public:
         ObjectDelete(0, labelName);
     }
 
-   void CreateButton()
+   void CreateController()
      {
       int chartColor =  ChartGetInteger(0, CHART_COLOR_BACKGROUND);
       // Panel background
@@ -100,7 +104,7 @@ public:
         }
 
       // Win Target label
-      string winTargetLabel = "WinTargetLabel";
+      winTargetLabel = "WinTargetLabel";
       if(ObjectFind(0, winTargetLabel) < 0)
         {
          ObjectCreate(0, winTargetLabel, OBJ_LABEL, 0, 0, 0);
@@ -116,7 +120,7 @@ public:
         }
 
       // Win Target edit
-      string winTargetEdit = "WinTargetEdit";
+      winTargetEdit = "WinTargetEdit";
       if(ObjectFind(0, winTargetEdit) < 0)
         {
          ObjectCreate(0, winTargetEdit, OBJ_EDIT, 0, 0, 0);
@@ -138,7 +142,7 @@ public:
         }
 
       // Loss Target label
-      string lossTargetLabel = "LossTargetLabel";
+      lossTargetLabel = "LossTargetLabel";
       if(ObjectFind(0, lossTargetLabel) < 0)
         {
          ObjectCreate(0, lossTargetLabel, OBJ_LABEL, 0, 0, 0);
@@ -153,7 +157,7 @@ public:
         }
 
       // Loss Target edit
-      string lossTargetEdit = "LossTargetEdit";
+      lossTargetEdit = "LossTargetEdit";
       if(ObjectFind(0, lossTargetEdit) < 0)
         {
          ObjectCreate(0, lossTargetEdit, OBJ_EDIT, 0, 0, 0);
@@ -173,6 +177,15 @@ public:
           ObjectSetInteger(0, lossTargetEdit, OBJPROP_BGCOLOR, clrBlack);
          }
         }
+     }
+
+   void DeleteController()
+     {
+      ObjectDelete(0, buttonOnName);
+      ObjectDelete(0, winTargetLabel);
+      ObjectDelete(0, winTargetEdit);
+      ObjectDelete(0, lossTargetLabel);
+      ObjectDelete(0, lossTargetEdit);
      }
 
    void CheckButtonClick()
