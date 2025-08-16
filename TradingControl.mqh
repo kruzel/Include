@@ -42,47 +42,136 @@ public:
 
    void CreateButton()
      {
-      // Create frame
-      frameName = "TradingControler";
+      int chartColor =  ChartGetInteger(0, CHART_COLOR_BACKGROUND);
+      // Panel background
+      frameName = "TradingControlPanelBG";
       if(ObjectFind(0, frameName) < 0)
         {
-         ObjectCreate(0, frameName, OBJ_RECTANGLE_LABEL, 0, 0, 0);
-         ObjectSetInteger(0, frameName, OBJPROP_XDISTANCE, 205);
-         ObjectSetInteger(0, frameName, OBJPROP_YDISTANCE, 15);
-         ObjectSetInteger(0, frameName, OBJPROP_XSIZE, 110);
-         ObjectSetInteger(0, frameName, OBJPROP_YSIZE, 50);
+         ObjectCreate(0, frameName, OBJ_RECTANGLE_LABEL , 0, 0, 0);
+         ObjectSetInteger(0, frameName, OBJPROP_XDISTANCE, 200);
+         ObjectSetInteger(0, frameName, OBJPROP_YDISTANCE, 10);
+         ObjectSetInteger(0, frameName, OBJPROP_XSIZE, 130);
+         ObjectSetInteger(0, frameName, OBJPROP_YSIZE, 180);
          ObjectSetInteger(0, frameName, OBJPROP_CORNER, 0);
-         ObjectSetInteger(0, frameName, OBJPROP_COLOR, clrGray);
+         
+         if(chartColor == clrWhite)
+         {
+          ObjectSetInteger(0, frameName, OBJPROP_BGCOLOR, clrBlack);
+          ObjectSetInteger(0, frameName, OBJPROP_COLOR, clrWhite);
+         }
+        else
+        {
+          ObjectSetInteger(0, frameName, OBJPROP_BGCOLOR, clrWhite);
+          ObjectSetInteger(0, frameName, OBJPROP_COLOR, clrBlack);
+        } 
          ObjectSetInteger(0, frameName, OBJPROP_BACK, false);
-         ObjectSetInteger(0, frameName, OBJPROP_BORDER_TYPE, BORDER_RAISED);
         }
 
+      // Title label
       labelName = "AutoTradingLabel";
       if(ObjectFind(0, labelName) < 0)
         {
          ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0);
-         ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, 220); // Center in frame (205 + 110/2 = 260)
-         ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, 20);  // Above button (button at Y=30, label at Y=15)
+         ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, 215);
+         ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, 20);
          ObjectSetInteger(0, labelName, OBJPROP_CORNER, 0);
          ObjectSetString(0, labelName, OBJPROP_TEXT, " AutoTrading ");
          ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 10);
-         ObjectSetInteger(0, labelName, OBJPROP_COLOR, clrBlack);
+         if(chartColor == clrWhite)
+          ObjectSetInteger(0, labelName, OBJPROP_COLOR, clrWhite);
+         else
+          ObjectSetInteger(0, labelName, OBJPROP_COLOR, clrBlack);
         }
-        
-      // Create AutoTrading button inside the frame
+
+      // AutoTrading button
       if(ObjectFind(0, buttonOnName) < 0)
         {
          ObjectCreate(0, buttonOnName, OBJ_BUTTON, 0, 0, 0);
-         ObjectSetInteger(0, buttonOnName, OBJPROP_XDISTANCE, 210); // Frame starts at 205, button at 210 (5px margin)
-         ObjectSetInteger(0, buttonOnName, OBJPROP_YDISTANCE, 40);  // Frame starts at 5, button at 10 (5px margin)
-         ObjectSetInteger(0, buttonOnName, OBJPROP_XSIZE, 100);     // Frame width 190, button 60 (5px margin each side)
-         ObjectSetInteger(0, buttonOnName, OBJPROP_YSIZE, 20);     // Frame height 50, button 20 (5px margin each side)
-         ObjectSetString(0, buttonOnName, OBJPROP_TEXT, "  Disabled  "); // Add margin with spaces
-         ObjectSetInteger(0, buttonOnName, OBJPROP_CORNER, 5);
+         ObjectSetInteger(0, buttonOnName, OBJPROP_XDISTANCE, 210);
+         ObjectSetInteger(0, buttonOnName, OBJPROP_YDISTANCE, 45);
+         ObjectSetInteger(0, buttonOnName, OBJPROP_XSIZE, 110);
+         ObjectSetInteger(0, buttonOnName, OBJPROP_YSIZE, 25);
+         ObjectSetString(0, buttonOnName, OBJPROP_TEXT, "  Disabled  ");
+         ObjectSetInteger(0, buttonOnName, OBJPROP_CORNER, 0);
          ObjectSetInteger(0, buttonOnName, OBJPROP_COLOR, clrRed);
          ObjectSetInteger(0, buttonOnName, OBJPROP_FONTSIZE, 10);
          ObjectSetInteger(0, buttonOnName, OBJPROP_ALIGN, ALIGN_CENTER);
-        ObjectSetInteger(0, buttonOnName, OBJPROP_STATE, tradingEnabled);
+         ObjectSetInteger(0, buttonOnName, OBJPROP_STATE, tradingEnabled);
+        }
+
+      // Win Target label
+      string winTargetLabel = "WinTargetLabel";
+      if(ObjectFind(0, winTargetLabel) < 0)
+        {
+         ObjectCreate(0, winTargetLabel, OBJ_LABEL, 0, 0, 0);
+         ObjectSetInteger(0, winTargetLabel, OBJPROP_XDISTANCE, 215);
+         ObjectSetInteger(0, winTargetLabel, OBJPROP_YDISTANCE, 85);
+         ObjectSetString(0, winTargetLabel, OBJPROP_TEXT, "Win Target %:");
+         ObjectSetInteger(0, winTargetLabel, OBJPROP_FONTSIZE, 10);
+         ObjectSetInteger(0, winTargetLabel, OBJPROP_COLOR, clrBlack);
+         if(chartColor == clrWhite)
+          ObjectSetInteger(0, winTargetLabel, OBJPROP_COLOR, clrWhite);
+         else
+          ObjectSetInteger(0, winTargetLabel, OBJPROP_COLOR, clrBlack);
+        }
+
+      // Win Target edit
+      string winTargetEdit = "WinTargetEdit";
+      if(ObjectFind(0, winTargetEdit) < 0)
+        {
+         ObjectCreate(0, winTargetEdit, OBJ_EDIT, 0, 0, 0);
+         ObjectSetInteger(0, winTargetEdit, OBJPROP_XDISTANCE, 210);
+         ObjectSetInteger(0, winTargetEdit, OBJPROP_YDISTANCE, 105);
+         ObjectSetInteger(0, winTargetEdit, OBJPROP_XSIZE, 110);
+         ObjectSetInteger(0, winTargetEdit, OBJPROP_YSIZE, 22);
+         ObjectSetString(0, winTargetEdit, OBJPROP_TEXT, "3.0");
+         if(chartColor == clrWhite)
+         {
+          ObjectSetInteger(0, winTargetEdit, OBJPROP_COLOR, clrBlack);
+          ObjectSetInteger(0, winTargetEdit, OBJPROP_BGCOLOR, clrWhite);
+         }
+         else
+         {
+          ObjectSetInteger(0, winTargetEdit, OBJPROP_COLOR, clrWhite);
+          ObjectSetInteger(0, winTargetEdit, OBJPROP_BGCOLOR, clrBlack);
+         }
+        }
+
+      // Loss Target label
+      string lossTargetLabel = "LossTargetLabel";
+      if(ObjectFind(0, lossTargetLabel) < 0)
+        {
+         ObjectCreate(0, lossTargetLabel, OBJ_LABEL, 0, 0, 0);
+         ObjectSetInteger(0, lossTargetLabel, OBJPROP_XDISTANCE, 215);
+         ObjectSetInteger(0, lossTargetLabel, OBJPROP_YDISTANCE, 135);
+         ObjectSetString(0, lossTargetLabel, OBJPROP_TEXT, "Loss Target %:");
+         ObjectSetInteger(0, lossTargetLabel, OBJPROP_FONTSIZE, 10);
+         if(chartColor == clrWhite)
+          ObjectSetInteger(0, lossTargetLabel, OBJPROP_COLOR, clrWhite);
+         else
+          ObjectSetInteger(0, lossTargetLabel, OBJPROP_COLOR, clrBlack);
+        }
+
+      // Loss Target edit
+      string lossTargetEdit = "LossTargetEdit";
+      if(ObjectFind(0, lossTargetEdit) < 0)
+        {
+         ObjectCreate(0, lossTargetEdit, OBJ_EDIT, 0, 0, 0);
+         ObjectSetInteger(0, lossTargetEdit, OBJPROP_XDISTANCE, 210);
+         ObjectSetInteger(0, lossTargetEdit, OBJPROP_YDISTANCE, 155);
+         ObjectSetInteger(0, lossTargetEdit, OBJPROP_XSIZE, 110);
+         ObjectSetInteger(0, lossTargetEdit, OBJPROP_YSIZE, 22);
+         ObjectSetString(0, lossTargetEdit, OBJPROP_TEXT, "-3.0");
+         if(chartColor == clrWhite)
+         {
+          ObjectSetInteger(0, lossTargetEdit, OBJPROP_COLOR, clrBlack);
+          ObjectSetInteger(0, lossTargetEdit, OBJPROP_BGCOLOR, clrWhite);
+         }
+         else
+         {
+          ObjectSetInteger(0, lossTargetEdit, OBJPROP_COLOR, clrWhite);
+          ObjectSetInteger(0, lossTargetEdit, OBJPROP_BGCOLOR, clrBlack);
+         }
         }
      }
 
@@ -113,6 +202,16 @@ public:
    bool IsTradingEnabled()
      {
       return tradingEnabled;
+     }
+
+    double GetWinTarget()
+     {
+      return StringToDouble(ObjectGetString(0, "WinTargetEdit", OBJPROP_TEXT));
+     }
+
+    double GetLossTarget()
+     {
+      return StringToDouble(ObjectGetString(0, "LossTargetEdit", OBJPROP_TEXT));
      }
   };
 //+------------------------------------------------------------------+
