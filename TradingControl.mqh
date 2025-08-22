@@ -44,7 +44,7 @@ public:
         ObjectDelete(0, labelName);
     }
 
-   void CreateController()
+   void CreateController(double MaxLoss, double MaxWin)
      {
       int chartColor =  ChartGetInteger(0, CHART_COLOR_BACKGROUND);
       // Panel background
@@ -128,7 +128,7 @@ public:
          ObjectSetInteger(0, winTargetEdit, OBJPROP_YDISTANCE, 105);
          ObjectSetInteger(0, winTargetEdit, OBJPROP_XSIZE, 110);
          ObjectSetInteger(0, winTargetEdit, OBJPROP_YSIZE, 22);
-         ObjectSetString(0, winTargetEdit, OBJPROP_TEXT, "3.0");
+         ObjectSetString(0, winTargetEdit, OBJPROP_TEXT, MaxWin);
          if(chartColor == clrWhite)
          {
           ObjectSetInteger(0, winTargetEdit, OBJPROP_COLOR, clrBlack);
@@ -165,7 +165,7 @@ public:
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_YDISTANCE, 155);
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_XSIZE, 110);
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_YSIZE, 22);
-         ObjectSetString(0, lossTargetEdit, OBJPROP_TEXT, "-3.0");
+         ObjectSetString(0, lossTargetEdit, OBJPROP_TEXT, MaxLoss);
          if(chartColor == clrWhite)
          {
           ObjectSetInteger(0, lossTargetEdit, OBJPROP_COLOR, clrBlack);
