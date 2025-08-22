@@ -139,7 +139,7 @@ double GetConsecutiveFailureCount(int Magic)
     return failureCount;
 }
 
-bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, double& price)
+bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, double& price, string symbol)
 {
     profit = 0;
     type = -1;
@@ -151,7 +151,7 @@ bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, dou
          if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
          {
               // Check if the order is from the specified magic number
-              if(OrderMagicNumber() == Magic)
+              if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
               {
                     // Check if the order was closed at the specified time
                     if(OrderCloseTime() == time)
