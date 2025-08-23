@@ -191,3 +191,33 @@ double GetProfitToday(int Magic)
 
     return totalProfit;
 }
+
+int GetLastClosedOrderToday(int Magic)
+{
+     int lastOrder = 0;
+     datetime lastCloseTime = 0;
+
+     // Loop through all closed orders
+     for(int i = OrdersTotal() - 1; i >= 0; i--)
+     {
+          if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+          {
+               // Check if the order is from the specified magic number
+               if(OrderMagicNumber() == Magic)
+               {
+                    // Check if the order was opened today
+                    if(OrderOpenTime() >= GetDayStart(TimeCurrent()))
+                    {
+                         // Check if this order was opened later than the previous one
+                         if(OrderCloseTime() > lastCloseTime)
+                         {
+                              lastCloseTime = OrderCloseTime();
+                              lastOrder = OrderTicket();
+                         }
+                    }
+               }
+          }
+     }
+
+     return lastOrder;
+}
