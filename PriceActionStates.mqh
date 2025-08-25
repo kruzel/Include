@@ -313,19 +313,19 @@ TrendState CPriceActionStates::DetectTrendState(int i, TrendState trendState, Tr
 
    if(PAverbose) printf("DetectTrendState, trendState=%s, lastBarDirection=%s", GetTrendDescription(trendState), GetTrendDescription(lastBarDirection));  
    if(PAverbose) printf("DetectTrendState, peakState1=%s, peakState2=%s", GetPeakDescription(priceActionState.peakState1), GetPeakDescription(priceActionState.peakState2));
-   // if(PAverbose) printf("DetectTrendState, peakClose1=%f, peakClose2=%f", priceActionState.peakClose1, priceActionState.peakClose2);
+   // if(PAverbose) printf("DetectTrendState, Close=%f, peakClose1=%f, peakClose2=%f", Close[i], priceActionState.peakClose1, priceActionState.peakClose2);
 
    double prevLowClose = -1;
    double prevHighClose = -1;
 
-   if((priceActionState.peakState1 != LOWER_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK) &&
-      (priceActionState.peakState2 != HIGHER_LOW_PEAK || priceActionState.peakState2 == LOWER_LOW_PEAK))
+   if((priceActionState.peakState1 == LOWER_HIGH_PEAK || priceActionState.peakState1 == HIGHER_HIGH_PEAK) &&
+      (priceActionState.peakState2 == HIGHER_LOW_PEAK || priceActionState.peakState2 == LOWER_LOW_PEAK))
    {
       prevHighClose = priceActionState.peakClose1;
       prevLowClose = priceActionState.peakClose2;
    }
-   else if((priceActionState.peakState1 != HIGHER_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK) && 
-      (priceActionState.peakState2 != LOWER_HIGH_PEAK || priceActionState.peakState2 == HIGHER_HIGH_PEAK))
+   else if((priceActionState.peakState1 == HIGHER_LOW_PEAK || priceActionState.peakState1 == LOWER_LOW_PEAK) && 
+      (priceActionState.peakState2 == LOWER_HIGH_PEAK || priceActionState.peakState2 == HIGHER_HIGH_PEAK))
    {
       prevLowClose = priceActionState.peakClose1;
       prevHighClose = priceActionState.peakClose2;
@@ -335,8 +335,8 @@ TrendState CPriceActionStates::DetectTrendState(int i, TrendState trendState, Tr
       Print("DetectTrendState failed to find prevous peaks");
    }
 
-   //if(PAverbose) Print("DetectTrendState, close0=", close0, ", prevLowClose=", prevLowClose, ", prevHighClose=", prevHighClose);
-      
+   if(PAverbose) Print("DetectTrendState, close0=", Close[i], ", prevLowClose=", prevLowClose, ", prevHighClose=", prevHighClose);
+
    if(trendState == NO_TREND)
    {
       if(lastBarDirection == UP_TREND)
@@ -488,7 +488,7 @@ void CPriceActionStates::VisualizePeakOverlay(int i, int peak_state)
       default:  return;
    }
    string name = "peak_" + IntegerToString(peaksCountr++) + "_time_" + TimeToString(Time[i], TIME_MINUTES) + "_" + GetPeakDescription((PeakState)peak_state);
-   if(PAverbose) Print("VisualizePeakOverlay: i=", i, " name=", name, ", y=", y, ", y_offset=", y_offset, ", chartRange=", chartRange);
+   // if(PAverbose) Print("VisualizePeakOverlay: i=", i, " name=", name, ", y=", y, ", y_offset=", y_offset, ", chartRange=", chartRange);
 
    ObjectDelete(name);
    if(ObjectCreate(name, OBJ_TEXT, 0, Time[i], y))
