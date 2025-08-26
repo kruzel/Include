@@ -139,7 +139,15 @@ double GetConsecutiveFailureCount(int Magic)
     return failureCount;
 }
 
-bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, double& price, string symbol)
+enum CloseReason
+{
+    None,
+    StopLoss,
+    TakeProfit,
+    Manual
+};
+
+bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, double& price, CloseReason& closeReason, string symbol)
 {
     profit = 0;
     type = -1;
@@ -159,7 +167,20 @@ bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, dou
                          profit = OrderProfit();
                          type = OrderType();
                          price = OrderClosePrice();
-                         return true; // Return true if we found the order
+                          // Get the close reason
+                          if(OrderProfit() < 0 && MathAbs(OrderClosePrice() - OrderStopLoss()) < Point)
+                          {
+                               closeReason = StopLoss;
+                          }
+                          else if(OrderProfit() > 0 && MathAbs(OrderClosePrice() - OrderTakeProfit()) < Point)
+                          {
+                               closeReason = TakeProfit;
+                          }
+                          else
+                          {
+                               closeReason = Manual;
+                          }
+                          return true; // Return true if we found the order
                     }
               }
          }
