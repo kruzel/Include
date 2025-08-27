@@ -242,3 +242,29 @@ int GetLastClosedOrderToday(int Magic)
 
      return lastOrder;
 }
+
+int GetLastOpenOrder(int Magic)
+{
+     int lastOrder = 0;
+     datetime lastOpenTime = 0;
+
+     // Loop through all open orders
+     for(int i = OrdersTotal() - 1; i >= 0; i--)
+     {
+          if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+          {
+               // Check if the order is from the specified magic number
+               if(OrderMagicNumber() == Magic)
+               {
+                    // Check if this order was opened later than the previous one
+                    if(OrderOpenTime() > lastOpenTime)
+                    {
+                         lastOpenTime = OrderOpenTime();
+                         lastOrder = OrderTicket();
+                    }
+               }
+          }
+     }
+
+     return lastOrder;
+}
