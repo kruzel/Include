@@ -9,11 +9,12 @@
 //+------------------------------------------------------------------+
 //| Setup parameters
 //+------------------------------------------------------------------+
-extern string  HeaderPA="----------Trend States Detection Settings-----------";
-extern double TrendMarginATRMultiplier = 0.2; // Trend Detection Margin (ATR)
-extern bool PAverbose = false; // Verbose output for debugging
-extern bool UseVisualizePeakOverlay = false; // Visualize peaks on chart
-extern bool UseDrawPeakLines = false; // Draw lines for peaks
+extern string   HeaderPA="----------Trend States Detection Settings-----------";
+extern double   TrendMarginATRMultiplier        = 0.2; // Trend Detection Margin (ATR)
+extern double   TrendMarginPoints               = 50; // Minimum Bar Size (Points)
+extern bool     PAverbose                       = false; // Verbose output for debugging
+extern bool     UseVisualizePeakOverlay         = false; // Visualize peaks on chart
+extern bool     UseDrawPeakLines                = false; // Draw lines for peaks
 
 enum PeakState {
    NO_PEAK = 0,
@@ -244,12 +245,14 @@ PaResults CPriceActionStates::ProcessBar(int i, double atr)
 //+------------------------------------------------------------------+
 TrendState CPriceActionStates::DetectBarDirection(double prevClose, double currClose, double atr=0)
 {
-   if(currClose > prevClose + atr*TrendMarginATRMultiplier)
+   double TrendMargin = MathMax(TrendMarginPoints*Point, atr*TrendMarginATRMultiplier);
+
+   if(currClose > prevClose + TrendMargin)
    {
       if(PAverbose) Print("DetectBarDirection UP");
       return UP_TREND;
    }
-   else if(currClose < prevClose - atr*TrendMarginATRMultiplier)
+   else if(currClose < prevClose - TrendMargin)
    {
       if(PAverbose) Print("DetectBarDirection DOWN");
       return DOWN_TREND;
@@ -310,6 +313,7 @@ string CPriceActionStates::GetTrendDescription(TrendState trendState)
 TrendState CPriceActionStates::DetectTrendState(int i, TrendState trendState, TrendState lastBarDirection, double atr=0)
 {
    TrendState res = trendState;
+   double TrendMargin = MathMax(TrendMarginPoints*Point, atr*TrendMarginATRMultiplier);
 
    if(PAverbose) printf("DetectTrendState, trendState=%s, lastBarDirection=%s", GetTrendDescription(trendState), GetTrendDescription(lastBarDirection));  
    if(PAverbose) printf("DetectTrendState, peakState1=%s, peakState2=%s", GetPeakDescription(priceActionState.peakState1), GetPeakDescription(priceActionState.peakState2));
@@ -362,7 +366,7 @@ TrendState CPriceActionStates::DetectTrendState(int i, TrendState trendState, Tr
          res = UP_TREND;
          if(PAverbose) Print("DetectTrendState UP_TREND_RETRACEMENT -> UP_TREND");
       }
-      else if(lastBarDirection == DOWN_TREND && (prevLowClose == -1 || Close[i]  < prevLowClose - atr*TrendMarginATRMultiplier)) 
+      else if(lastBarDirection == DOWN_TREND && (prevLowClose == -1 || Close[i]  < prevLowClose - TrendMargin)) 
       {
          res = DOWN_TREND;
          if(PAverbose) Print("DetectTrendState UP_TREND_RETRACEMENT -> DOWN_TREND");
@@ -381,7 +385,7 @@ TrendState CPriceActionStates::DetectTrendState(int i, TrendState trendState, Tr
          res = DOWN_TREND;
          if(PAverbose) Print("DetectTrendState DOWN_TREND_RETRACEMENT -> DOWN_TREND");
        }
-       else if (lastBarDirection == UP_TREND && (prevHighClose == -1 || Close[i] > prevHighClose + atr*TrendMarginATRMultiplier)) 
+       else if (lastBarDirection == UP_TREND && (prevHighClose == -1 || Close[i] > prevHighClose + TrendMargin)) 
        {
          res = UP_TREND;
          if(PAverbose) Print("DetectTrendState DOWN_TREND_RETRACEMENT -> UP_TREND");
