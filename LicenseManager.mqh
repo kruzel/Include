@@ -261,8 +261,8 @@ public:
                 string trialData = m_hardwareId + "|" + IntegerToString(TimeCurrent());
                 FileWriteString(handle, trialData);
                 FileClose(handle);
-                Print("Trial file created successfully. 30 days trial started.");
-                return 30; // 30 day trial
+                Print("Trial file created successfully. 7 days trial started.");
+                return 7; // 7 day trial
             }
             else
             {
@@ -299,7 +299,7 @@ public:
                     }
                     
                     int daysUsed = (int)((TimeCurrent() - startTime) / 86400);
-                    int remainingDays = MathMax(0, 30 - daysUsed);
+                    int remainingDays = MathMax(0, 7 - daysUsed);
                     Print("Days used: ", daysUsed, ", Remaining days: ", remainingDays);
                     return remainingDays;
                 }
