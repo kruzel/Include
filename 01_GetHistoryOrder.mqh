@@ -268,3 +268,49 @@ int GetLastOpenOrder(int Magic)
 
      return lastOrder;
 }
+
+bool GetLastProfit(int Magic, int& order, datetime& time, double& profit, int& type, double& price, CloseReason& closeReason, string symbol)
+{
+    profit = 0;
+    type = -1;
+    price = 0;
+    int lastOrder = 0;
+    datetime lastCloseTime = 0;
+
+    // Loop through all closed orders
+    for(int i = OrdersHistoryTotal() - 1; i >= 0; i--)
+    {
+         if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+         {
+              // Check if the order is from the specified magic number
+              if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
+              {
+                    if(OrderCloseTime() > lastCloseTime)
+                    {
+                         lastCloseTime = OrderCloseTime();
+                         lastOrder = OrderTicket();
+                         profit = OrderProfit();
+                         type = OrderType();
+                         price = OrderClosePrice();
+                         time = lastCloseTime;
+                         order = lastOrder;
+                          // Get the close reason
+                          if(OrderProfit() < 0 && MathAbs(OrderClosePrice() - OrderStopLoss()) < Point)
+                          {
+                               closeReason = StopLoss;
+                          }
+                          else if(OrderProfit() > 0 && MathAbs(OrderClosePrice() - OrderTakeProfit()) < Point)
+                          {
+                               closeReason = TakeProfit;
+                          }
+                          else
+                          {
+                               closeReason = Manual;
+                          }
+                    }
+              }
+         }
+    }
+
+    return lastOrder!=0; // Return false if we didn't find the order
+}
