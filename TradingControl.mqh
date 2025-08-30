@@ -28,6 +28,7 @@ private:
    string winTargetEdit;
    string lossTargetLabel;
    string lossTargetEdit;
+   string version;
 
 public:
    CTradingControl()
@@ -55,7 +56,7 @@ public:
          ObjectSetInteger(0, frameName, OBJPROP_XDISTANCE, 200);
          ObjectSetInteger(0, frameName, OBJPROP_YDISTANCE, 10);
          ObjectSetInteger(0, frameName, OBJPROP_XSIZE, 130);
-         ObjectSetInteger(0, frameName, OBJPROP_YSIZE, 180);
+         ObjectSetInteger(0, frameName, OBJPROP_YSIZE, 220);
          ObjectSetInteger(0, frameName, OBJPROP_CORNER, 0);
          
          if(chartColor == clrWhite)
@@ -71,15 +72,15 @@ public:
          ObjectSetInteger(0, frameName, OBJPROP_BACK, false);
         }
 
-      // Title label
+        // Title label
       labelName = "AutoTradingLabel";
       if(ObjectFind(0, labelName) < 0)
         {
          ObjectCreate(0, labelName, OBJ_LABEL, 0, 0, 0);
          ObjectSetInteger(0, labelName, OBJPROP_XDISTANCE, 215);
-         ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, 20);
+         ObjectSetInteger(0, labelName, OBJPROP_YDISTANCE, 25);
          ObjectSetInteger(0, labelName, OBJPROP_CORNER, 0);
-         ObjectSetString(0, labelName, OBJPROP_TEXT, " AutoTrading ");
+         ObjectSetString(0, labelName, OBJPROP_TEXT, " Awesome EA ");
          ObjectSetInteger(0, labelName, OBJPROP_FONTSIZE, 10);
          if(chartColor == clrWhite)
           ObjectSetInteger(0, labelName, OBJPROP_COLOR, clrWhite);
@@ -87,12 +88,29 @@ public:
           ObjectSetInteger(0, labelName, OBJPROP_COLOR, clrBlack);
         }
 
+        // Version label
+        string versionLabel = "VersionLabel";
+        if(ObjectFind(0, versionLabel) < 0)
+        {
+          ObjectCreate(0, versionLabel, OBJ_LABEL, 0, 0, 0);
+          ObjectSetInteger(0, versionLabel, OBJPROP_XDISTANCE, 225);
+          ObjectSetInteger(0, versionLabel, OBJPROP_YDISTANCE, 50);
+          ObjectSetInteger(0, versionLabel, OBJPROP_CORNER, 0);
+          ObjectSetString(0, versionLabel, OBJPROP_TEXT, "Version " + version);
+          ObjectSetInteger(0, versionLabel, OBJPROP_FONTSIZE, 10);
+          ObjectSetInteger(0, versionLabel, OBJPROP_ALIGN, ALIGN_CENTER);
+          if(chartColor == clrWhite)
+            ObjectSetInteger(0, versionLabel, OBJPROP_COLOR, clrWhite);
+          else
+            ObjectSetInteger(0, versionLabel, OBJPROP_COLOR, clrBlack);
+        }
+
       // AutoTrading button
       if(ObjectFind(0, buttonOnName) < 0)
         {
          ObjectCreate(0, buttonOnName, OBJ_BUTTON, 0, 0, 0);
          ObjectSetInteger(0, buttonOnName, OBJPROP_XDISTANCE, 210);
-         ObjectSetInteger(0, buttonOnName, OBJPROP_YDISTANCE, 45);
+         ObjectSetInteger(0, buttonOnName, OBJPROP_YDISTANCE, 85);
          ObjectSetInteger(0, buttonOnName, OBJPROP_XSIZE, 110);
          ObjectSetInteger(0, buttonOnName, OBJPROP_YSIZE, 25);
          ObjectSetString(0, buttonOnName, OBJPROP_TEXT, "  Disabled  ");
@@ -109,7 +127,7 @@ public:
         {
          ObjectCreate(0, winTargetLabel, OBJ_LABEL, 0, 0, 0);
          ObjectSetInteger(0, winTargetLabel, OBJPROP_XDISTANCE, 215);
-         ObjectSetInteger(0, winTargetLabel, OBJPROP_YDISTANCE, 85);
+         ObjectSetInteger(0, winTargetLabel, OBJPROP_YDISTANCE, 125);
          ObjectSetString(0, winTargetLabel, OBJPROP_TEXT, "Win Target %:");
          ObjectSetInteger(0, winTargetLabel, OBJPROP_FONTSIZE, 10);
          ObjectSetInteger(0, winTargetLabel, OBJPROP_COLOR, clrBlack);
@@ -125,7 +143,7 @@ public:
         {
          ObjectCreate(0, winTargetEdit, OBJ_EDIT, 0, 0, 0);
          ObjectSetInteger(0, winTargetEdit, OBJPROP_XDISTANCE, 210);
-         ObjectSetInteger(0, winTargetEdit, OBJPROP_YDISTANCE, 105);
+         ObjectSetInteger(0, winTargetEdit, OBJPROP_YDISTANCE, 145);
          ObjectSetInteger(0, winTargetEdit, OBJPROP_XSIZE, 110);
          ObjectSetInteger(0, winTargetEdit, OBJPROP_YSIZE, 22);
          ObjectSetString(0, winTargetEdit, OBJPROP_TEXT, MaxWin);
@@ -147,7 +165,7 @@ public:
         {
          ObjectCreate(0, lossTargetLabel, OBJ_LABEL, 0, 0, 0);
          ObjectSetInteger(0, lossTargetLabel, OBJPROP_XDISTANCE, 215);
-         ObjectSetInteger(0, lossTargetLabel, OBJPROP_YDISTANCE, 135);
+         ObjectSetInteger(0, lossTargetLabel, OBJPROP_YDISTANCE, 175);
          ObjectSetString(0, lossTargetLabel, OBJPROP_TEXT, "Loss Target %:");
          ObjectSetInteger(0, lossTargetLabel, OBJPROP_FONTSIZE, 10);
          if(chartColor == clrWhite)
@@ -162,7 +180,7 @@ public:
         {
          ObjectCreate(0, lossTargetEdit, OBJ_EDIT, 0, 0, 0);
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_XDISTANCE, 210);
-         ObjectSetInteger(0, lossTargetEdit, OBJPROP_YDISTANCE, 155);
+         ObjectSetInteger(0, lossTargetEdit, OBJPROP_YDISTANCE, 195);
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_XSIZE, 110);
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_YSIZE, 22);
          ObjectSetString(0, lossTargetEdit, OBJPROP_TEXT, MaxLoss);
@@ -216,6 +234,34 @@ public:
      {
       return tradingEnabled;
      }
+
+    void SetTradingEnabled(bool enabled)
+    {
+      tradingEnabled = enabled;
+      ObjectSetInteger(0, buttonOnName, OBJPROP_STATE, tradingEnabled);
+      if(tradingEnabled)
+      {
+         ObjectSetString(0, buttonOnName, OBJPROP_TEXT, "  Enabled  ");
+         ObjectSetInteger(0, buttonOnName, OBJPROP_COLOR, clrGreen);
+         Print("AutoTrading enabled.");
+      }
+      else
+      {
+         ObjectSetString(0, buttonOnName, OBJPROP_TEXT, "  Disabled  ");
+         ObjectSetInteger(0, buttonOnName, OBJPROP_COLOR, clrRed);
+         Print("AutoTrading disabled.");
+      }
+    }
+
+    void SetVersion(string version)
+    {
+        this.version = version;
+        string versionLabel = "VersionLabel";
+        if(ObjectFind(0, versionLabel) >= 0)
+        {
+          ObjectSetString(0, versionLabel, OBJPROP_TEXT, "Version " + version);
+        }
+    }
 
     double GetWinTarget()
      {
