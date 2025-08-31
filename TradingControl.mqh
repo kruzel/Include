@@ -146,7 +146,7 @@ public:
          ObjectSetInteger(0, winTargetEdit, OBJPROP_YDISTANCE, 145);
          ObjectSetInteger(0, winTargetEdit, OBJPROP_XSIZE, 110);
          ObjectSetInteger(0, winTargetEdit, OBJPROP_YSIZE, 22);
-         ObjectSetString(0, winTargetEdit, OBJPROP_TEXT, MaxWin);
+         ObjectSetString(0, winTargetEdit, OBJPROP_TEXT, string(MaxWin));
          if(chartColor == clrWhite)
          {
           ObjectSetInteger(0, winTargetEdit, OBJPROP_COLOR, clrBlack);
@@ -183,7 +183,7 @@ public:
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_YDISTANCE, 195);
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_XSIZE, 110);
          ObjectSetInteger(0, lossTargetEdit, OBJPROP_YSIZE, 22);
-         ObjectSetString(0, lossTargetEdit, OBJPROP_TEXT, MaxLoss);
+         ObjectSetString(0, lossTargetEdit, OBJPROP_TEXT, string(MaxLoss));
          if(chartColor == clrWhite)
          {
           ObjectSetInteger(0, lossTargetEdit, OBJPROP_COLOR, clrBlack);
@@ -253,9 +253,9 @@ public:
       }
     }
 
-    void SetVersion(string version)
+    void SetVersion(string _version)
     {
-        this.version = version;
+        this.version = _version;
         string versionLabel = "VersionLabel";
         if(ObjectFind(0, versionLabel) >= 0)
         {

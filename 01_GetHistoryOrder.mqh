@@ -106,35 +106,53 @@ datetime GetDayStart(datetime time)
 }
 
 //+------------------------------------------------------------------+
-//| Function returning the last closed order by close time     |
+//| Get Total Loss Amount from Consecutive Failures                  |
+//+------------------------------------------------------------------+
+double GetConsecutiveLossAmount(int Magic, int& consecutiveLosses)
+{
+    double totalLoss = 0;
+    consecutiveLosses = 0;
+    
+    // Get today's start time (start of current day)
+    datetime currentTime = TimeCurrent();
+    datetime todayStart = currentTime - (currentTime % 86400); // 86400 = seconds in a day
+    
+    // Check order history from most recent backwards
+    for(int i = OrdersHistoryTotal() - 1; i >= 0; i--)
+    {
+        if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+        {
+            if(OrderSymbol() == Symbol() && 
+               OrderMagicNumber() == Magic && 
+               OrderCloseTime() >= todayStart &&
+               (OrderType() == OP_BUY || OrderType() == OP_SELL))
+            {
+                double profit = OrderProfit() + OrderSwap() + OrderCommission();
+                
+                if(profit < 0)
+                {
+                    totalLoss += profit; // Add negative profit (loss)
+                    consecutiveLosses++;
+                }
+                else
+                {
+                    break; // Stop at first profitable trade
+                }
+            }
+        }
+    }
+    
+    return totalLoss;
+}
+//+------------------------------------------------------------------+
+//| Get Total Loss Amount from Consecutive Failures                  |
+//+------------------------------------------------------------------+
+//| Function returning number of consecutive failures           |
 //+------------------------------------------------------------------+
 double GetConsecutiveFailureCount(int Magic)
 {
-   int tickets[];
-   datetime OCTs[];
-   double profits[];
-
-   datetime dayStart = GetDayStart(TimeCurrent());
-
-    int totalClosedOrders = GetHistoryOrderByCloseTime(tickets, OCTs, profits, Magic, 1); // 1 for ascending order
-    if(totalClosedOrders == 0)
-        return 0;
-
     int failureCount = 0;
-
-    // Loop through all closed orders and count number of consecutive failures
-    for(int i = 0; i < totalClosedOrders; i++)
-    {
-        if(profits[i] <= 0 && OCTs[i] > dayStart) // Check if the order was a failure
-        {
-            failureCount++;
-        }
-        else
-        {
-            // Reset count if we hit a successful order
-            break;
-        }
-    }
+    double lossAmount = GetConsecutiveLossAmount(Magic, failureCount); 
     
     return failureCount;
 }
