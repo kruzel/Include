@@ -24,6 +24,8 @@ private:
    string frameName;
    string labelName;
    string buttonOnName;
+   string versionLabel;
+
    string winTargetLabel;
    string winTargetEdit;
    string lossTargetLabel;
@@ -43,10 +45,13 @@ public:
         ObjectDelete(0, buttonOnName);
         ObjectDelete(0, frameName);
         ObjectDelete(0, labelName);
+        ObjectDelete(0, versionLabel);
     }
 
-   void CreateController(double MaxLoss, double MaxWin)
+   void CreateController(double MaxLoss, double MaxWin, bool IsTesting, string _Version)
      {
+      version = _Version;
+
       int chartColor =  ChartGetInteger(0, CHART_COLOR_BACKGROUND);
       // Panel background
       frameName = "TradingControlPanelBG";
@@ -89,7 +94,7 @@ public:
         }
 
         // Version label
-        string versionLabel = "VersionLabel";
+        versionLabel = "VersionLabel";
         if(ObjectFind(0, versionLabel) < 0)
         {
           ObjectCreate(0, versionLabel, OBJ_LABEL, 0, 0, 0);
@@ -195,6 +200,9 @@ public:
           ObjectSetInteger(0, lossTargetEdit, OBJPROP_BGCOLOR, clrBlack);
          }
         }
+
+      if(IsTesting)
+        SetTradingEnabled(True);
      }
 
    void DeleteController()
@@ -256,7 +264,6 @@ public:
     void SetVersion(string _version)
     {
         this.version = _version;
-        string versionLabel = "VersionLabel";
         if(ObjectFind(0, versionLabel) >= 0)
         {
           ObjectSetString(0, versionLabel, OBJPROP_TEXT, "Version " + version);
