@@ -207,7 +207,7 @@ bool GetBarProfitByTime(datetime time, int Magic, double& profit, int& type, dou
     return false; // Return false if we didn't find the order
 }
 
-double GetProfitToday(int Magic)
+double GetProfitToday(int Magic, string symbol)
 {
     double totalProfit = 0;
 
@@ -217,7 +217,7 @@ double GetProfitToday(int Magic)
          if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
          {
               // Check if the order is from the specified magic number
-              if(OrderMagicNumber() == Magic)
+              if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
               {
                    // Check if the order was closed today
                    if(OrderCloseTime() >= GetDayStart(TimeCurrent()))
@@ -231,7 +231,7 @@ double GetProfitToday(int Magic)
     return totalProfit;
 }
 
-int GetLastClosedOrderToday(int Magic)
+int GetLastClosedOrderToday(int Magic, string symbol)
 {
      int lastOrder = 0;
      datetime lastCloseTime = 0;
@@ -242,7 +242,7 @@ int GetLastClosedOrderToday(int Magic)
           if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
           {
                // Check if the order is from the specified magic number
-               if(OrderMagicNumber() == Magic)
+               if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
                {
                     // Check if the order was opened today
                     if(OrderOpenTime() >= GetDayStart(TimeCurrent()))
@@ -261,7 +261,7 @@ int GetLastClosedOrderToday(int Magic)
      return lastOrder;
 }
 
-int GetLastOpenOrder(int Magic)
+int GetLastOpenOrder(int Magic, string symbol)
 {
      int lastOrder = 0;
      datetime lastOpenTime = 0;
@@ -272,7 +272,7 @@ int GetLastOpenOrder(int Magic)
           if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
           {
                // Check if the order is from the specified magic number
-               if(OrderMagicNumber() == Magic)
+               if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
                {
                     // Check if this order was opened later than the previous one
                     if(OrderOpenTime() > lastOpenTime)
