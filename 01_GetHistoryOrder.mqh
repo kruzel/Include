@@ -332,3 +332,92 @@ bool GetLastProfit(int Magic, int& order, datetime& time, double& profit, int& t
 
     return lastOrder!=0; // Return false if we didn't find the order
 }
+
+// Get the sum of profits of last consecutive sequence of orders that starts from loss till all loss is recovered
+// 
+double GetSumProfitSinceLoss(int Magic, string symbol)
+{
+    double sumProfit = 0;
+    bool foundLoss = false;
+
+    // Loop through all closed orders
+    for(int i = OrdersHistoryTotal() - 1; i >= 0; i--)
+    {
+     if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+     {
+       if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
+       {
+         // Store order data for sorting
+         int tempTickets[];
+         datetime tempCloseTimes[];
+         double tempProfits[];
+         int tempCount = 0;
+         
+         // Collect all relevant orders first
+         for(int j = OrdersHistoryTotal() - 1; j >= 0; j--)
+         {
+          if(OrderSelect(j, SELECT_BY_POS, MODE_HISTORY))
+          {
+              if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
+              {
+               tempCount++;
+               ArrayResize(tempTickets, tempCount);
+               ArrayResize(tempCloseTimes, tempCount);
+               ArrayResize(tempProfits, tempCount);
+               
+               tempTickets[tempCount-1] = OrderTicket();
+               tempCloseTimes[tempCount-1] = OrderCloseTime();
+               tempProfits[tempCount-1] = OrderProfit();
+              }
+          }
+         }
+         
+         // Sort by close time (ascending)
+         for(int k = 0; k < tempCount - 1; k++)
+         {
+          for(int l = k + 1; l < tempCount; l++)
+          {
+              if(tempCloseTimes[k] > tempCloseTimes[l])
+              {
+               // Swap close times
+               datetime tempTime = tempCloseTimes[k];
+               tempCloseTimes[k] = tempCloseTimes[l];
+               tempCloseTimes[l] = tempTime;
+               
+               // Swap tickets
+               int tempTicket = tempTickets[k];
+               tempTickets[k] = tempTickets[l];
+               tempTickets[l] = tempTicket;
+               
+               // Swap profits
+               double tempProfit = tempProfits[k];
+               tempProfits[k] = tempProfits[l];
+               tempProfits[l] = tempProfit;
+              }
+          }
+         }
+         
+         // Process sorted orders
+         for(int m = 0; m < tempCount; m++)
+         {
+          // Check if the order is a loss
+          if(!foundLoss && tempProfits[m] < 0)
+              foundLoss = true;
+          
+          if(foundLoss)
+              sumProfit += tempProfits[m];
+
+          if(sumProfit >= 0) // look for next sequence of loss and profit < 0
+          {
+             sumProfit = 0;
+             foundLoss = false;
+          }
+         }
+         
+         break; // Exit the outer loop since we've processed all orders
+       }
+     }
+    }
+
+    return sumProfit;
+}
