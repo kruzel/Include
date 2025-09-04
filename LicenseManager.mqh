@@ -78,10 +78,11 @@ public:
         if(StringLen(licenseKey) != 29) return false;
         if(StringSubstr(licenseKey, 0, 7) != "FALCON-") return false;
         
-        // Check for proper dash positions
-        if(StringGetCharacter(licenseKey, 7) != '-' ||
-           StringGetCharacter(licenseKey, 13) != '-' ||
-           StringGetCharacter(licenseKey, 19) != '-') return false;
+        // Check for proper dash positions at 6, 12, 18, and 24
+        if(StringGetCharacter(licenseKey, 6) != '-' ||
+           StringGetCharacter(licenseKey, 12) != '-' ||
+           StringGetCharacter(licenseKey, 18) != '-' ||
+           StringGetCharacter(licenseKey, 24) != '-') return false;
            
         return true;
     }
