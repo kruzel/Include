@@ -33,7 +33,7 @@ void OrderProfitToCSV(int terminalNumber)
 
     // Check if file exists and has content (titles)
     string currentDate = TimeToStr(TimeCurrent(), TIME_DATE);
-    string fileName = "OrdersResultsT-" + string(terminalNumber) + "_" + currentDate + ".csv";
+    string fileName = "OrdersResultsT_" + string(MagicNumber) + "_" + string(terminalNumber) + ".csv";
     bool fileExists = false;
     
     // Check if file exists by trying to open it for reading
