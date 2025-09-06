@@ -124,7 +124,7 @@ double GetConsecutiveLossAmount(int Magic, int& consecutiveLosses)
         {
             if(OrderSymbol() == Symbol() && 
                OrderMagicNumber() == Magic && 
-               OrderCloseTime() >= todayStart &&
+               // OrderCloseTime() >= todayStart &&
                (OrderType() == OP_BUY || OrderType() == OP_SELL))
             {
                 double profit = OrderProfit() + OrderSwap() + OrderCommission();
@@ -231,28 +231,44 @@ double GetProfitToday(int Magic, string symbol)
     return totalProfit;
 }
 
+double GetTotalProfit(int Magic, string symbol)
+{
+    double totalProfit = 0;
+
+    // Loop through all closed orders
+    for(int i = OrdersHistoryTotal() - 1; i >= 0; i--)
+    {
+         if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+         {
+              // Check if the order is from the specified magic number
+              if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
+              {
+                   totalProfit += OrderProfit();
+              }
+         }
+    }
+
+    return totalProfit;
+}
+
 int GetLastClosedOrderToday(int Magic, string symbol)
 {
      int lastOrder = 0;
      datetime lastCloseTime = 0;
 
      // Loop through all closed orders
-     for(int i = OrdersTotal() - 1; i >= 0; i--)
+     for(int i = OrdersHistoryTotal() - 1; i >= 0; i--)
      {
           if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
           {
                // Check if the order is from the specified magic number
                if(OrderMagicNumber() == Magic && symbol == OrderSymbol())
                {
-                    // Check if the order was opened today
-                    if(OrderOpenTime() >= GetDayStart(TimeCurrent()))
+                    // Check if this order was closed today and later than the previous one
+                    if(OrderCloseTime() >= GetDayStart(TimeCurrent()) && OrderCloseTime() > lastCloseTime)
                     {
-                         // Check if this order was opened later than the previous one
-                         if(OrderCloseTime() > lastCloseTime)
-                         {
-                              lastCloseTime = OrderCloseTime();
-                              lastOrder = OrderTicket();
-                         }
+                         lastCloseTime = OrderCloseTime();
+                         lastOrder = OrderTicket();
                     }
                }
           }
